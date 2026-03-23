@@ -3,6 +3,7 @@ package com.audiobrowser.player
 import androidx.media3.common.C
 import androidx.media3.exoplayer.DefaultLoadControl
 import androidx.media3.exoplayer.LoadControl
+import androidx.media3.exoplayer.analytics.PlayerId
 import androidx.media3.exoplayer.source.TrackGroupArray
 import androidx.media3.exoplayer.trackselection.ExoTrackSelection
 import androidx.media3.exoplayer.upstream.Allocator
@@ -97,11 +98,11 @@ class DynamicLoadControl(initialConfig: BufferConfig = BufferConfig()) : LoadCon
     updateBufferConfig(BufferConfig())
   }
 
-  override fun getAllocator(): Allocator = allocator
+  override fun getAllocator(playerId: PlayerId): Allocator = allocator
 
-  override fun getBackBufferDurationUs(): Long = backBufferUs
+  override fun getBackBufferDurationUs(playerId: PlayerId): Long = backBufferUs
 
-  override fun retainBackBufferFromKeyframe(): Boolean = false
+  override fun retainBackBufferFromKeyframe(playerId: PlayerId): Boolean = false
 
   override fun shouldContinueLoading(parameters: LoadControl.Parameters): Boolean {
     return parameters.bufferedDurationUs < maxBufferUs
@@ -137,7 +138,7 @@ class DynamicLoadControl(initialConfig: BufferConfig = BufferConfig()) : LoadCon
     }
   }
 
-  override fun onPrepared() {
+  override fun onPrepared(playerId: PlayerId) {
     allocator.reset()
     prepareStartTimeMs = System.currentTimeMillis()
     playbackStarted = false
@@ -151,11 +152,11 @@ class DynamicLoadControl(initialConfig: BufferConfig = BufferConfig()) : LoadCon
     // Required by LoadControl interface - buffer config is managed via updateBufferConfig()
   }
 
-  override fun onStopped() {
+  override fun onStopped(playerId: PlayerId) {
     // Required by LoadControl interface
   }
 
-  override fun onReleased() {
+  override fun onReleased(playerId: PlayerId) {
     // Reset allocator when released
     allocator.reset()
   }
