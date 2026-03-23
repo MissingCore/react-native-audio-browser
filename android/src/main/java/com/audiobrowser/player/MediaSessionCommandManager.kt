@@ -28,6 +28,7 @@ import timber.log.Timber
 class MediaSessionCommandManager {
 
   companion object {
+    private const val CUSTOM_ACTION_SKIP_TO_NEXT = "SKIP_TO_NEXT"
     private const val CUSTOM_ACTION_JUMP_BACKWARD = "JUMP_BACKWARD"
     private const val CUSTOM_ACTION_JUMP_FORWARD = "JUMP_FORWARD"
     const val CUSTOM_ACTION_FAVORITE = "FAVORITE"
@@ -212,6 +213,11 @@ class MediaSessionCommandManager {
     Timber.Forest.d("onCustomCommand: action=${command.customAction}")
 
     return when (command.customAction) {
+      CUSTOM_ACTION_SKIP_TO_NEXT -> {
+        Timber.Forest.d("Executing skip to next command")
+        player.forwardingPlayer.seekToNext()
+        true
+      }
       CUSTOM_ACTION_JUMP_BACKWARD -> {
         Timber.Forest.d("Executing jump backward command")
         player.forwardingPlayer.seekBack()
@@ -302,6 +308,20 @@ class MediaSessionCommandManager {
       Timber.Forest.d("Removed search commands - search not configured")
     }
 
+    // Create custom command button for skip to next (required for notification visibility
+    // if only 1 track is loaded)
+    if (capabilities.skipToNext != false) {
+      val skipToNextCommand = SessionCommand(CUSTOM_ACTION_SKIP_TO_NEXT, Bundle())
+      customLayoutButtons.add(
+        CommandButton.Builder()
+          .setDisplayName("Skip to Next")
+          .setSessionCommand(skipToNextCommand)
+          .setIconResId(R.drawable.media3_icon_next)
+          .build()
+      )
+      sessionCommandsBuilder.add(skipToNextCommand)
+    }
+
     // Create custom command buttons for jump commands (required for notification visibility)
     // All capabilities enabled by default - only false disables
     if (capabilities.jumpBackward != false) {
@@ -387,9 +407,12 @@ class MediaSessionCommandManager {
         }
         NotificationButton.SKIP_TO_NEXT -> {
           if (capabilities.skipToNext != false) {
-            CommandButton.Builder(CommandButton.ICON_NEXT)
-              .setDisplayName("Next")
-              .setPlayerCommand(MediaPlayer.COMMAND_SEEK_TO_NEXT)
+            val command = SessionCommand(CUSTOM_ACTION_SKIP_TO_NEXT, Bundle())
+            sessionCommandsBuilder.add(command)
+            CommandButton.Builder()
+              .setDisplayName("Skip to Next")
+              .setSessionCommand(command)
+              .setIconResId(R.drawable.media3_icon_next)
               .setSlots(slot)
               .build()
           } else null
