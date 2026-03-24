@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { AppState } from 'react-native'
 import { nativeBrowser } from '../../native'
 import { NativeUpdatedValue } from '../../utils/NativeUpdatedValue'
 import { useNativeUpdatedValue } from '../../utils/useNativeUpdatedValue'
@@ -70,9 +71,10 @@ export function useProgress(): Progress {
  * Use this when you need custom polling behavior instead of event-based updates.
  *
  * @param updateInterval - Update interval in milliseconds (default: 1000)
+ * @param runInBackground - If we update the state while the app is backgrounded (default: true)
  * @returns The current playback progress
  */
-export function usePolledProgress(updateInterval = 1000): Progress {
+export function usePolledProgress(updateInterval = 1000, runInBackground = true): Progress {
   const [state, setState] = useState<Progress>({
     position: 0,
     duration: 0,
@@ -84,8 +86,9 @@ export function usePolledProgress(updateInterval = 1000): Progress {
 
     const update = () => {
       try {
-        const { position, duration, buffered } = getProgress()
         if (!mounted) return
+        if (!runInBackground && AppState.currentState !== 'active') return
+        const { position, duration, buffered } = getProgress()
 
         setState((currentState) =>
           position === currentState.position &&
@@ -116,7 +119,7 @@ export function usePolledProgress(updateInterval = 1000): Progress {
       mounted = false
       unsubscribeState()
     }
-  }, [updateInterval])
+  }, [updateInterval, runInBackground])
 
   return state
 }
