@@ -55,6 +55,7 @@
     "clean": "del-cli android/build example/android/build example/android/app/build example/ios/build lib",
     "codegen": "node codegen/index.js --logLevel=\"debug\" && node post-script.cjs && yarn build",
     "prepare": "bob build",
+    "prepack": "yarn prepare && yarn codegen",
     "example": "yarn workspace example-native",
     "ci:format": "prettier --check src",
     "ci:lint": "oxlint src",
