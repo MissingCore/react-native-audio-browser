@@ -232,11 +232,6 @@ class Service : MediaLibraryService(), MediaSessionService.Listener {
   override fun onTaskRemoved(rootIntent: Intent?) {
     onUnbind(rootIntent)
 
-    runBlocking {
-      player.getCallbacks()?.handleBeforeServiceKilled()
-      delay(500)
-    }
-
     val appKilledPlaybackBehavior = player.appKilledPlaybackBehavior
 
     Timber.d("player = $player, appKilledPlaybackBehavior = $appKilledPlaybackBehavior")
@@ -262,6 +257,12 @@ class Service : MediaLibraryService(), MediaSessionService.Listener {
           Timber.d("External controllers still connected - deferring aggressive cleanup")
           // Just pause and remove notification, but keep service alive for external controllers
           player.pause()
+
+          runBlocking {
+            player.getCallbacks()?.handleBeforeServiceKilled()
+            delay(500)
+          }
+
           stopForeground(STOP_FOREGROUND_REMOVE)
         } else {
           Timber.d("No external controllers - proceeding with service shutdown")
@@ -272,6 +273,12 @@ class Service : MediaLibraryService(), MediaSessionService.Listener {
             player.clear()
             player.stop()
             player.destroy()
+
+            runBlocking {
+              player.getCallbacks()?.handleBeforeServiceKilled()
+              delay(500)
+            }
+
             scope.cancel()
             stopForeground(STOP_FOREGROUND_REMOVE)
             stopSelf()
