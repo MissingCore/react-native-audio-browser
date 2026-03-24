@@ -70,3 +70,11 @@ export const onPlaybackChanged = NativeUpdatedValue.emitterize<Playback>(
 export function usePlayback(): Playback {
   return useNativeUpdatedValue(getPlayback, onPlaybackChanged)
 }
+
+/**
+ * Sets a custom handler that fires in `onTaskRemoved`.
+ * @param callback - Called before the app is killed. Pass undefined to disable.
+ */
+export function handleBeforeServiceKilled(callback: (() => void) | undefined) {
+  nativeBrowser.handleBeforeServiceKilled = callback
+}

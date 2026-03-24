@@ -200,6 +200,7 @@ public class HybridAudioBrowser: HybridAudioBrowserSpec, @unchecked Sendable {
   public var handleRemoteSeek: ((RemoteSeekEvent) -> Void)?
   public var handleRemoteSkip: (() -> Void)?
   public var handleRemoteStop: (() -> Void)?
+  public var handleBeforeServiceKilled: (() -> Void)?
 
   // MARK: - Other Callbacks
 

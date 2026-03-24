@@ -31,7 +31,9 @@ import com.margelo.nitro.audiobrowser.SearchParams
 import kotlin.system.exitProcess
 import kotlinx.coroutines.MainScope
 import kotlinx.coroutines.cancel
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 import timber.log.Timber
 
 /**
@@ -229,6 +231,11 @@ class Service : MediaLibraryService(), MediaSessionService.Listener {
 
   override fun onTaskRemoved(rootIntent: Intent?) {
     onUnbind(rootIntent)
+
+    runBlocking {
+      player.getCallbacks()?.handleBeforeServiceKilled()
+      delay(500)
+    }
 
     val appKilledPlaybackBehavior = player.appKilledPlaybackBehavior
 

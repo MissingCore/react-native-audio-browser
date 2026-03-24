@@ -146,6 +146,7 @@ class AudioBrowser : HybridAudioBrowserSpec(), ServiceConnection {
 
   // MARK: Player callbacks
   override var onPlaybackChanged: (data: Playback) -> Unit = {}
+  override var handleBeforeServiceKilled: (() -> Unit)? = null
   override var onRemoteBookmark: () -> Unit = {}
   override var onRemoteDislike: () -> Unit = {}
   override var onRemoteJumpBackward: (RemoteJumpBackwardEvent) -> Unit = {}
@@ -1007,6 +1008,16 @@ class AudioBrowser : HybridAudioBrowserSpec(), ServiceConnection {
     object : Callbacks {
       override fun onPlaybackChanged(playback: Playback) {
         post { this@AudioBrowser.onPlaybackChanged(playback) }
+      }
+
+      override fun handleBeforeServiceKilled(): Boolean {
+        val handled =
+          this@AudioBrowser.handleBeforeServiceKilled?.let {
+            it.invoke()
+            true
+          } ?: false
+
+        return handled
       }
 
       override fun onPlaybackActiveTrackChanged(event: PlaybackActiveTrackChangedEvent) {

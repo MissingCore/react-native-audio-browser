@@ -27,6 +27,8 @@ interface Callbacks {
   // Playback state events
   fun onPlaybackChanged(playback: Playback)
 
+  fun handleBeforeServiceKilled(): Boolean
+
   fun onPlaybackActiveTrackChanged(event: PlaybackActiveTrackChangedEvent)
 
   fun onPlaybackProgressUpdated(event: PlaybackProgressUpdatedEvent)

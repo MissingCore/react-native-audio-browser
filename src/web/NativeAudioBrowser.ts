@@ -209,6 +209,7 @@ export class NativeAudioBrowser
     undefined
   handleRemoteSkip: (() => void) | undefined = undefined
   handleRemoteStop: (() => void) | undefined = undefined
+  handleBeforeServiceKilled: (() => void) | undefined = undefined
 
   // MARK: Constructor
   constructor() {
