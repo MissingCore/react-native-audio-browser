@@ -1,7 +1,7 @@
 package com.audiobrowser.util
 
 import android.os.Bundle
-import androidx.media.utils.MediaConstants
+import androidx.media3.session.MediaConstants
 import com.margelo.nitro.audiobrowser.ResolvedTrack
 import com.margelo.nitro.audiobrowser.Track
 import com.margelo.nitro.audiobrowser.TrackStyle
@@ -21,15 +21,15 @@ object MediaExtrasBuilder {
     return when (this) {
       TrackStyle.LIST ->
         if (isAndroidResource) {
-          MediaConstants.DESCRIPTION_EXTRAS_VALUE_CONTENT_STYLE_CATEGORY_LIST_ITEM
+          MediaConstants.EXTRAS_VALUE_CONTENT_STYLE_CATEGORY_LIST_ITEM
         } else {
-          MediaConstants.DESCRIPTION_EXTRAS_VALUE_CONTENT_STYLE_LIST_ITEM
+          MediaConstants.EXTRAS_VALUE_CONTENT_STYLE_LIST_ITEM
         }
       TrackStyle.GRID ->
         if (isAndroidResource) {
-          MediaConstants.DESCRIPTION_EXTRAS_VALUE_CONTENT_STYLE_CATEGORY_GRID_ITEM
+          MediaConstants.EXTRAS_VALUE_CONTENT_STYLE_CATEGORY_GRID_ITEM
         } else {
-          MediaConstants.DESCRIPTION_EXTRAS_VALUE_CONTENT_STYLE_GRID_ITEM
+          MediaConstants.EXTRAS_VALUE_CONTENT_STYLE_GRID_ITEM
         }
     }
   }
@@ -58,18 +58,18 @@ object MediaExtrasBuilder {
   ): Bundle =
     Bundle().apply {
       groupTitle?.let {
-        putString(MediaConstants.DESCRIPTION_EXTRAS_KEY_CONTENT_STYLE_GROUP_TITLE, it)
+        putString(MediaConstants.EXTRAS_KEY_CONTENT_STYLE_GROUP_TITLE, it)
       }
       style?.let {
         putInt(
-          MediaConstants.DESCRIPTION_EXTRAS_KEY_CONTENT_STYLE_SINGLE_ITEM,
+          MediaConstants.EXTRAS_KEY_CONTENT_STYLE_SINGLE_ITEM,
           it.toContentStyleValue(artwork),
         )
       }
       childrenStyle?.let {
         val styleValue = it.toContentStyleValue(artwork)
-        putInt(MediaConstants.DESCRIPTION_EXTRAS_KEY_CONTENT_STYLE_BROWSABLE, styleValue)
-        putInt(MediaConstants.DESCRIPTION_EXTRAS_KEY_CONTENT_STYLE_PLAYABLE, styleValue)
+        putInt(MediaConstants.EXTRAS_KEY_CONTENT_STYLE_BROWSABLE, styleValue)
+        putInt(MediaConstants.EXTRAS_KEY_CONTENT_STYLE_PLAYABLE, styleValue)
       }
     }
 }
