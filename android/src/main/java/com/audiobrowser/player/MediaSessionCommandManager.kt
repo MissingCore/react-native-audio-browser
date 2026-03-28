@@ -253,6 +253,9 @@ class MediaSessionCommandManager {
         MediaPlayer.COMMAND_SEEK_TO_PREVIOUS_MEDIA_ITEM,
         // Removes the "Queue" button on the "Now Playing" screen.
         MediaPlayer.COMMAND_GET_TIMELINE,
+        // Remove built-in "Skip Next" button (that doesn't show up when only 1 track is queued) and
+        // use our custom button.
+        MediaPlayer.COMMAND_SEEK_TO_NEXT,
       )
 
     // Only disable jump commands if capabilities are explicitly disabled (false)
@@ -545,6 +548,9 @@ class MediaSessionCommandManager {
     builder.remove(MediaPlayer.COMMAND_SEEK_TO_PREVIOUS_MEDIA_ITEM)
     // Removes the "Queue" button on the "Now Playing" screen.
     builder.remove(MediaPlayer.COMMAND_GET_TIMELINE)
+    // Remove built-in "Skip Next" button (that doesn't show up when only 1 track is queued) and
+    // use our custom button.
+    builder.remove(MediaPlayer.COMMAND_SEEK_TO_NEXT)
 
     // Determine which buttons will be shown
     val showSkipPrevious: Boolean
