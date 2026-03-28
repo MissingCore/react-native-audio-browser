@@ -251,6 +251,8 @@ class MediaSessionCommandManager {
         // This forces MediaSession to only use the "smart" commands we can control via capabilities
         MediaPlayer.COMMAND_SEEK_TO_NEXT_MEDIA_ITEM,
         MediaPlayer.COMMAND_SEEK_TO_PREVIOUS_MEDIA_ITEM,
+        // Removes the "Queue" button on the "Now Playing" screen.
+        MediaPlayer.COMMAND_GET_TIMELINE,
       )
 
     // Only disable jump commands if capabilities are explicitly disabled (false)
@@ -541,6 +543,8 @@ class MediaSessionCommandManager {
     // Always remove direct media item commands to avoid dual-command confusion
     builder.remove(MediaPlayer.COMMAND_SEEK_TO_NEXT_MEDIA_ITEM)
     builder.remove(MediaPlayer.COMMAND_SEEK_TO_PREVIOUS_MEDIA_ITEM)
+    // Removes the "Queue" button on the "Now Playing" screen.
+    builder.remove(MediaPlayer.COMMAND_GET_TIMELINE)
 
     // Determine which buttons will be shown
     val showSkipPrevious: Boolean
