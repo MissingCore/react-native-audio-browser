@@ -259,7 +259,7 @@ class Service : MediaLibraryService(), MediaSessionService.Listener {
           player.pause()
 
           runBlocking {
-            player.getCallbacks()?.handleBeforeServiceKilled()
+            player.getCallbacks()?.handleBeforeServiceKilled(false)
             delay(500)
           }
 
@@ -275,7 +275,7 @@ class Service : MediaLibraryService(), MediaSessionService.Listener {
             player.destroy()
 
             runBlocking {
-              player.getCallbacks()?.handleBeforeServiceKilled()
+              player.getCallbacks()?.handleBeforeServiceKilled(true)
               delay(500)
             }
 

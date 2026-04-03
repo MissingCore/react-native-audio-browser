@@ -27,7 +27,7 @@ interface Callbacks {
   // Playback state events
   fun onPlaybackChanged(playback: Playback)
 
-  fun handleBeforeServiceKilled(): Boolean
+  fun handleBeforeServiceKilled(permanent: Boolean): Boolean
 
   fun onPlaybackActiveTrackChanged(event: PlaybackActiveTrackChangedEvent)
 

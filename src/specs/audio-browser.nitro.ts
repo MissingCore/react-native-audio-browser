@@ -170,7 +170,7 @@ export interface AudioBrowser extends HybridObject<{
   handleRemoteSeek: ((event: RemoteSeekEvent) => void) | undefined
   handleRemoteSkip: (() => void) | undefined
   handleRemoteStop: (() => void) | undefined
-  handleBeforeServiceKilled: (() => void) | undefined
+  handleBeforeServiceKilled: ((permanent: boolean) => void) | undefined
 
   // MARK: player api
   load(track: Track): void

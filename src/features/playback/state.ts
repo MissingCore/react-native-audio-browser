@@ -73,8 +73,8 @@ export function usePlayback(): Playback {
 
 /**
  * Sets a custom handler that fires in `onTaskRemoved`.
- * @param callback - Called before the app is killed. Pass undefined to disable.
+ * @param callback - Called before the app is killed. Recieves a boolean based on whether it's a full shutdown or not. Pass undefined to disable.
  */
-export function handleBeforeServiceKilled(callback: (() => void) | undefined) {
+export function handleBeforeServiceKilled(callback: ((permanent: boolean) => void) | undefined) {
   nativeBrowser.handleBeforeServiceKilled = callback
 }
