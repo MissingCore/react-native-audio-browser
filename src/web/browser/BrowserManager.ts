@@ -189,6 +189,9 @@ export class BrowserManager {
     }
   }
 
+  /** @deprecated A stub on web. */
+  revalidateBrowser(): void {}
+
   /**
    * Main navigation logic.
    * Resolves content for the given path and updates state.

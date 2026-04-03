@@ -494,6 +494,10 @@ export class NativeAudioBrowser
     this.browserManager.notifyContentChanged(path)
   }
 
+  revalidateBrowser(): void {
+    this.browserManager.revalidateBrowser()
+  }
+
   setFavorites(favorites: string[]): void {
     this.favoriteManager.setFavorites(favorites)
   }

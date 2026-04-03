@@ -108,6 +108,7 @@ export interface AudioBrowser extends HybridObject<{
   ) => void
   getFormattedNavigationError(): FormattedNavigationError | undefined
   notifyContentChanged(path: string): void
+  revalidateBrowser(): void
   setFavorites(favorites: string[]): void
   configuration: NativeBrowserConfiguration
 

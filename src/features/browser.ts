@@ -289,6 +289,14 @@ export const notifyContentChanged = (path: string): void => {
 }
 
 /**
+ * Notifies external media controllers (Android Auto, CarPlay) that all
+ * content should be refreshed.
+ */
+export const revalidateBrowser = (): void => {
+  nativeBrowser.revalidateBrowser()
+}
+
+/**
  * Returns whether search functionality is configured via `configureBrowser({ search: ... })`.
  */
 export function hasSearch(): boolean {

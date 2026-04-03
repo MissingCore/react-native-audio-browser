@@ -435,6 +435,8 @@ public class HybridAudioBrowser: HybridAudioBrowserSpec, @unchecked Sendable {
     }
   }
 
+  public func revalidateBrowser() {}
+
   public func setFavorites(favorites: [String]) throws {
     onMainActor { browserManager.setFavorites(favorites) }
   }

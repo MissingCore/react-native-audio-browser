@@ -1470,6 +1470,14 @@ class Player(internal val context: Context) {
   }
 
   /**
+   * Notifies external controllers (Android Auto, etc.) that content that affects multiple paths has changed.
+   * All controllers will refresh their UI.
+   */
+  fun revalidateBrowser() {
+    mediaSessionCallback.notifyBrowserReady()
+  }
+
+  /**
    * Returns the recommended artwork size in pixels from the connected media browser (e.g., Android
    * Auto), or null if not provided.
    */

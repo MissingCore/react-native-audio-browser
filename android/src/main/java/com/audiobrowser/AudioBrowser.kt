@@ -608,6 +608,19 @@ class AudioBrowser : HybridAudioBrowserSpec(), ServiceConnection {
     }
   }
 
+  override fun revalidateBrowser() {
+    Timber.d("Revalidating entire browser")
+
+    // Invalidate cached content so future navigations fetch fresh data
+    browserManager.clearContentCache()
+
+    // Notify external media controllers (Android Auto)
+    connectedService?.player?.revalidateBrowser()
+
+    // Refresh content of currently displayed path.
+    mainScope.launch { browserManager.refresh() }
+  }
+
   override fun setFavorites(favorites: Array<String>) {
     browserManager.setFavorites(favorites.toList())
   }
