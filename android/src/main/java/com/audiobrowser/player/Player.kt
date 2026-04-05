@@ -7,6 +7,7 @@ import androidx.media3.common.C
 import androidx.media3.common.ForwardingPlayer
 import androidx.media3.common.HeartRating
 import androidx.media3.common.MediaItem
+import androidx.media3.common.Player as MediaPlayer
 import androidx.media3.common.TrackSelectionParameters
 import androidx.media3.database.StandaloneDatabaseProvider
 import androidx.media3.datasource.cache.LeastRecentlyUsedCacheEvictor
@@ -209,6 +210,21 @@ class Player(internal val context: Context) {
    * event handling.
    */
   private inner class InterceptingPlayer(player: ExoPlayer) : ForwardingPlayer(player) {
+
+    override fun isCommandAvailable(command: Int): Boolean {
+      return when (command) {
+        MediaPlayer.COMMAND_SEEK_TO_NEXT_MEDIA_ITEM -> true
+        MediaPlayer.COMMAND_SEEK_TO_NEXT -> true
+        else -> super.isCommandAvailable(command)
+      }
+    }
+
+    override fun getAvailableCommands(): MediaPlayer.Commands {
+      return super.getAvailableCommands().buildUpon()
+        .add(MediaPlayer.COMMAND_SEEK_TO_NEXT_MEDIA_ITEM)
+        .add(MediaPlayer.COMMAND_SEEK_TO_NEXT)
+        .build()
+    }
 
     override fun setMediaItems(mediaItems: MutableList<MediaItem>, resetPosition: Boolean) {
       return super.setMediaItems(mediaItems, resetPosition)

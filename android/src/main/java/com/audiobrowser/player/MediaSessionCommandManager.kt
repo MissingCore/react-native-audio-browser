@@ -28,7 +28,6 @@ import timber.log.Timber
 class MediaSessionCommandManager {
 
   companion object {
-    private const val CUSTOM_ACTION_SKIP_TO_NEXT = "SKIP_TO_NEXT"
     private const val CUSTOM_ACTION_JUMP_BACKWARD = "JUMP_BACKWARD"
     private const val CUSTOM_ACTION_JUMP_FORWARD = "JUMP_FORWARD"
     const val CUSTOM_ACTION_FAVORITE = "FAVORITE"
@@ -213,11 +212,6 @@ class MediaSessionCommandManager {
     Timber.Forest.d("onCustomCommand: action=${command.customAction}")
 
     return when (command.customAction) {
-      CUSTOM_ACTION_SKIP_TO_NEXT -> {
-        Timber.Forest.d("Executing skip to next command")
-        player.forwardingPlayer.seekToNext()
-        true
-      }
       CUSTOM_ACTION_JUMP_BACKWARD -> {
         Timber.Forest.d("Executing jump backward command")
         player.forwardingPlayer.seekBack()
@@ -253,9 +247,6 @@ class MediaSessionCommandManager {
         MediaPlayer.COMMAND_SEEK_TO_PREVIOUS_MEDIA_ITEM,
         // Removes the "Queue" button on the "Now Playing" screen.
         MediaPlayer.COMMAND_GET_TIMELINE,
-        // Remove built-in "Skip Next" button (that doesn't show up when only 1 track is queued) and
-        // use our custom button.
-        MediaPlayer.COMMAND_SEEK_TO_NEXT,
       )
 
     // Only disable jump commands if capabilities are explicitly disabled (false)
@@ -311,20 +302,6 @@ class MediaSessionCommandManager {
       sessionCommandsBuilder.remove(SessionCommand.COMMAND_CODE_LIBRARY_SEARCH)
       sessionCommandsBuilder.remove(SessionCommand.COMMAND_CODE_LIBRARY_GET_SEARCH_RESULT)
       Timber.Forest.d("Removed search commands - search not configured")
-    }
-
-    // Create custom command button for skip to next (required for notification visibility
-    // if only 1 track is loaded)
-    if (capabilities.skipToNext != false) {
-      val skipToNextCommand = SessionCommand(CUSTOM_ACTION_SKIP_TO_NEXT, Bundle())
-      customLayoutButtons.add(
-        CommandButton.Builder()
-          .setDisplayName("Skip to Next")
-          .setSessionCommand(skipToNextCommand)
-          .setIconResId(R.drawable.media3_icon_next)
-          .build()
-      )
-      sessionCommandsBuilder.add(skipToNextCommand)
     }
 
     // Create custom command buttons for jump commands (required for notification visibility)
@@ -412,12 +389,9 @@ class MediaSessionCommandManager {
         }
         NotificationButton.SKIP_TO_NEXT -> {
           if (capabilities.skipToNext != false) {
-            val command = SessionCommand(CUSTOM_ACTION_SKIP_TO_NEXT, Bundle())
-            sessionCommandsBuilder.add(command)
-            CommandButton.Builder()
-              .setDisplayName("Skip to Next")
-              .setSessionCommand(command)
-              .setIconResId(R.drawable.media3_icon_next)
+            CommandButton.Builder(CommandButton.ICON_NEXT)
+              .setDisplayName("Next")
+              .setPlayerCommand(MediaPlayer.COMMAND_SEEK_TO_NEXT)
               .setSlots(slot)
               .build()
           } else null
@@ -548,9 +522,6 @@ class MediaSessionCommandManager {
     builder.remove(MediaPlayer.COMMAND_SEEK_TO_PREVIOUS_MEDIA_ITEM)
     // Removes the "Queue" button on the "Now Playing" screen.
     builder.remove(MediaPlayer.COMMAND_GET_TIMELINE)
-    // Remove built-in "Skip Next" button (that doesn't show up when only 1 track is queued) and
-    // use our custom button.
-    builder.remove(MediaPlayer.COMMAND_SEEK_TO_NEXT)
 
     // Determine which buttons will be shown
     val showSkipPrevious: Boolean
