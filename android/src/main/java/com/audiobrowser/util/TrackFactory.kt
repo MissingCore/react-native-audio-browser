@@ -6,7 +6,6 @@ import androidx.media3.common.HeartRating
 import androidx.media3.common.MediaItem
 import androidx.media3.common.MediaMetadata
 import coil3.ImageLoader
-import com.margelo.nitro.NitroModules
 import com.margelo.nitro.audiobrowser.Track
 
 object TrackFactory {
@@ -32,9 +31,7 @@ object TrackFactory {
 
     val artworkUri =
       if (artworkUriOriginal != null) {
-        NitroModules.applicationContext?.let { ctx ->
-          ArtworkContentUriMapper.mapToLocalContentUri(ctx, artworkUriOriginal)
-        } ?: artworkUriOriginal
+        ArtworkContentUriMapper.mapToLocalContentUriWithAppContext(artworkUriOriginal)
       } else {
         null
       }

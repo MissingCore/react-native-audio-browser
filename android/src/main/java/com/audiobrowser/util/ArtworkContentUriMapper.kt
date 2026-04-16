@@ -3,6 +3,7 @@ package com.audiobrowser.util
 import android.content.ContentResolver
 import android.content.Context
 import android.net.Uri
+import com.margelo.nitro.NitroModules
 
 /** Builds app-local content:// URIs for artwork so Android Auto can open them reliably. */
 object ArtworkContentUriMapper {
@@ -11,6 +12,15 @@ object ArtworkContentUriMapper {
 
   fun authorityFor(context: Context): String {
     return "${context.packageName}$AUTHORITY_SUFFIX"
+  }
+
+  /**
+   * Convenience wrapper that maps with Nitro app context when available.
+   * Falls back to the original source when app context is unavailable.
+   */
+  fun mapToLocalContentUriWithAppContext(source: String): String {
+    val context = NitroModules.applicationContext ?: return source
+    return mapToLocalContentUri(context, source)
   }
 
   /**

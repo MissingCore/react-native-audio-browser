@@ -38,16 +38,5 @@
             android:authorities="${applicationId}.audiobrowser.artwork"
             android:exported="true"
             android:grantUriPermissions="true" />
-
-        <!-- FileProvider to expose local files to host app code paths when needed -->
-        <provider
-            android:name="androidx.core.content.FileProvider"
-            android:authorities="${applicationId}.fileprovider"
-            android:exported="false"
-            android:grantUriPermissions="true">
-            <meta-data
-                android:name="android.support.FILE_PROVIDER_PATHS"
-                android:resource="@xml/audiobrowser_file_paths" />
-        </provider>
     </application>
 </manifest>
