@@ -6,6 +6,7 @@ import androidx.media3.common.HeartRating
 import androidx.media3.common.MediaItem
 import androidx.media3.common.MediaMetadata
 import coil3.ImageLoader
+import com.margelo.nitro.NitroModules
 import com.margelo.nitro.audiobrowser.Track
 
 object TrackFactory {
@@ -27,7 +28,16 @@ object TrackFactory {
     val extras = MediaExtrasBuilder.build(track)
 
     // Use transformed artworkSource.uri if available, otherwise fall back to original artwork
-    val artworkUri = track.artworkSource?.uri ?: track.artwork
+    val artworkUriOriginal = track.artworkSource?.uri ?: track.artwork
+
+    val artworkUri =
+      if (artworkUriOriginal != null) {
+        NitroModules.applicationContext?.let { ctx ->
+          ArtworkContentUriMapper.mapToLocalContentUri(ctx, artworkUriOriginal)
+        } ?: artworkUriOriginal
+      } else {
+        null
+      }
 
     val mediaMetadata =
       MediaMetadata.Builder()
@@ -92,8 +102,11 @@ object TrackFactory {
       .setExtras(extras)
       .apply { track.favorited?.let { setUserRating(HeartRating(it)) } }
 
+    val finalArtworkUrl =
+      artworkUrl?.let { ArtworkContentUriMapper.mapToLocalContentUri(context, it) }
+
     // Apply artwork with SVG pre-rendering if needed
-    SvgArtworkRenderer.applyArtwork(metadataBuilder, artworkUrl, context, imageLoader)
+    SvgArtworkRenderer.applyArtwork(metadataBuilder, finalArtworkUrl, context, imageLoader)
 
     val mediaMetadata = metadataBuilder.build()
 
