@@ -3,6 +3,7 @@ package com.audiobrowser.util
 import androidx.core.net.toUri
 import androidx.media3.common.MediaItem
 import androidx.media3.common.MediaMetadata
+import com.margelo.nitro.NitroModules
 import com.margelo.nitro.audiobrowser.ResolvedTrack
 
 object ResolvedTrackFactory {
@@ -11,7 +12,16 @@ object ResolvedTrackFactory {
     val extras = MediaExtrasBuilder.build(resolvedTrack)
 
     // Use transformed artworkSource.uri if available, otherwise fall back to original artwork
-    val artworkUri = resolvedTrack.artworkSource?.uri ?: resolvedTrack.artwork
+    val artworkUriOriginal = resolvedTrack.artworkSource?.uri ?: resolvedTrack.artwork
+
+    val artworkUri =
+      if (artworkUriOriginal != null) {
+        NitroModules.applicationContext?.let { ctx ->
+          ArtworkContentUriMapper.mapToLocalContentUri(ctx, artworkUriOriginal)
+        } ?: artworkUriOriginal
+      } else {
+        null
+      }
 
     val mediaMetadata =
       MediaMetadata.Builder()

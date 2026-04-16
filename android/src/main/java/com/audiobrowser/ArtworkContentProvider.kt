@@ -9,7 +9,9 @@ import android.os.ParcelFileDescriptor
 import com.audiobrowser.util.ArtworkContentUriMapper
 import java.io.File
 import java.io.FileNotFoundException
+import java.io.FileInputStream
 import java.security.MessageDigest
+import timber.log.Timber
 
 /**
  * Proxies local artwork URIs (file://, content://, android.resource://) as app-local content://
@@ -56,6 +58,8 @@ class ArtworkContentProvider : ContentProvider() {
       ArtworkContentUriMapper.extractSourceUri(uri)
         ?: throw FileNotFoundException("Missing source URI")
 
+    Timber.d("ArtworkContentProvider.openFile: requested=$uri source=$sourceUri")
+
     val sourceScheme = sourceUri.scheme?.lowercase() ?: throw FileNotFoundException("Missing scheme")
     if (
       sourceScheme != ContentResolver.SCHEME_FILE &&
@@ -70,16 +74,49 @@ class ArtworkContentProvider : ContentProvider() {
       cacheDir.mkdirs()
     }
 
+    // Fast path: open file:// directly.
+    if (sourceScheme == ContentResolver.SCHEME_FILE) {
+      val sourceFile = File(sourceUri.path ?: throw FileNotFoundException("Invalid file URI"))
+      if (!sourceFile.exists() || !sourceFile.isFile) {
+        throw FileNotFoundException("Source file does not exist: $sourceUri")
+      }
+      Timber.d("ArtworkContentProvider: serving direct file URI")
+      return ParcelFileDescriptor.open(sourceFile, ParcelFileDescriptor.MODE_READ_ONLY)
+    }
+
+    // Fast path: many content/resource providers support opening a file descriptor directly.
+    if (
+      sourceScheme == ContentResolver.SCHEME_CONTENT ||
+        sourceScheme == ContentResolver.SCHEME_ANDROID_RESOURCE
+    ) {
+      ctx.contentResolver.openFileDescriptor(sourceUri, "r")?.let {
+        Timber.d("ArtworkContentProvider: serving direct descriptor for $sourceScheme URI")
+        return it
+      }
+    }
+
     val targetFile = File(cacheDir, "${sha256(sourceUri.toString())}.img")
 
     if (!targetFile.exists() || targetFile.length() <= 0L) {
       val tempFile = File(cacheDir, "${targetFile.name}.tmp")
-      ctx.contentResolver.openInputStream(sourceUri).use { input ->
-        if (input == null) {
-          throw FileNotFoundException("Unable to open source artwork URI: $sourceUri")
+      when (sourceScheme) {
+        ContentResolver.SCHEME_FILE -> {
+          val sourceFile = File(sourceUri.path ?: throw FileNotFoundException("Invalid file URI"))
+          FileInputStream(sourceFile).use { input ->
+            tempFile.outputStream().use { output ->
+              input.copyTo(output)
+            }
+          }
         }
-        tempFile.outputStream().use { output ->
-          input.copyTo(output)
+        else -> {
+          ctx.contentResolver.openInputStream(sourceUri).use { input ->
+            if (input == null) {
+              throw FileNotFoundException("Unable to open source artwork URI: $sourceUri")
+            }
+            tempFile.outputStream().use { output ->
+              input.copyTo(output)
+            }
+          }
         }
       }
 
@@ -90,6 +127,7 @@ class ArtworkContentProvider : ContentProvider() {
         tempFile.copyTo(targetFile, overwrite = true)
         tempFile.delete()
       }
+      Timber.d("ArtworkContentProvider: cached artwork at ${targetFile.absolutePath}")
     }
 
     return ParcelFileDescriptor.open(targetFile, ParcelFileDescriptor.MODE_READ_ONLY)
