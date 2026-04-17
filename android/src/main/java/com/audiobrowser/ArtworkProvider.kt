@@ -41,7 +41,7 @@ class ArtworkProvider : ContentProvider() {
 
   override fun getType(uri: Uri): String = "image/*"
   override fun onCreate(): Boolean = true
-  override fun query(uri: Uri, projection: Array<String>?, sselection: String?, selectionArgs: Array<String>?, sortOrder: String?): Cursor? = null
+  override fun query(uri: Uri, projection: Array<String>?, selection: String?, selectionArgs: Array<String>?, sortOrder: String?): Cursor? = null
   override fun insert(uri: Uri, values: ContentValues?): Uri? = null
   override fun delete(uri: Uri, selection: String?, selectionArgs: Array<String>?): Int = 0
   override fun update(uri: Uri, values: ContentValues?, selection: String?, selectionArgs: Array<String>?): Int = 0
