@@ -34,7 +34,7 @@
         </receiver>
         <!-- Artwork content provider for Android Auto / AAOS artwork loading -->
         <provider
-            android:name="com.audiobrowser.ArtworkContentProvider"
+            android:name="com.audiobrowser.ArtworkProvider"
             android:authorities="${applicationId}.audiobrowser.artwork"
             android:exported="true"
             android:grantUriPermissions="true" />

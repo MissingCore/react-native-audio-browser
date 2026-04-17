@@ -24,7 +24,7 @@ object ArtworkContentUriMapper {
   }
 
   /**
-   * Converts supported source URIs to an app-local content URI handled by ArtworkContentProvider.
+   * Converts supported source URIs to an app-local content URI handled by ArtworkProvider.
    * Returns the original URI string when no conversion is required.
    */
   fun mapToLocalContentUri(context: Context, source: String): String {

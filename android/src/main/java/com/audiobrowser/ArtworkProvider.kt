@@ -15,36 +15,7 @@ import java.security.MessageDigest
  * Proxies local artwork URIs (file://, content://, android.resource://) as app-local content://
  * URIs so Android Auto can read artwork through a stable provider endpoint.
  */
-class ArtworkContentProvider : ContentProvider() {
-
-  override fun onCreate(): Boolean = true
-
-  override fun query(
-    uri: Uri,
-    projection: Array<out String>?,
-    selection: String?,
-    selectionArgs: Array<out String>?,
-    sortOrder: String?,
-  ): Cursor? = null
-
-  override fun getType(uri: Uri): String = "image/*"
-
-  override fun insert(uri: Uri, values: ContentValues?): Uri? {
-    throw UnsupportedOperationException("Read-only provider")
-  }
-
-  override fun delete(uri: Uri, selection: String?, selectionArgs: Array<out String>?): Int {
-    throw UnsupportedOperationException("Read-only provider")
-  }
-
-  override fun update(
-    uri: Uri,
-    values: ContentValues?,
-    selection: String?,
-    selectionArgs: Array<out String>?,
-  ): Int {
-    throw UnsupportedOperationException("Read-only provider")
-  }
+class ArtworkProvider : ContentProvider() {
 
   override fun openFile(uri: Uri, mode: String): ParcelFileDescriptor {
     if (!mode.startsWith("r")) {
@@ -111,6 +82,13 @@ class ArtworkContentProvider : ContentProvider() {
 
     return ParcelFileDescriptor.open(targetFile, ParcelFileDescriptor.MODE_READ_ONLY)
   }
+
+  override fun getType(uri: Uri): String = "image/*"
+  override fun onCreate(): Boolean = true
+  override fun query(uri: Uri, projection: Array<String>?, sselection: String?, selectionArgs: Array<String>?, sortOrder: String?): Cursor? = null
+  override fun insert(uri: Uri, values: ContentValues?): Uri? = null
+  override fun delete(uri: Uri, selection: String?, selectionArgs: Array<String>?): Int = 0
+  override fun update(uri: Uri, values: ContentValues?, selection: String?, selectionArgs: Array<String>?): Int = 0
 
   private fun sha256(value: String): String {
     val digest = MessageDigest.getInstance("SHA-256").digest(value.toByteArray())
