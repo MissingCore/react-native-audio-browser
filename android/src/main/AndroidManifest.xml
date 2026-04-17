@@ -36,6 +36,7 @@
         <provider
             android:name="com.audiobrowser.ArtworkProvider"
             android:authorities="${applicationId}.audiobrowser.artwork"
-            android:exported="false" />
+            android:exported="true"
+            android:grantUriPermissions="true" />
     </application>
 </manifest>
