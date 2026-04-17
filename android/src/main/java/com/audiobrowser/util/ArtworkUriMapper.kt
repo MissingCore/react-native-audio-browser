@@ -22,11 +22,7 @@ object ArtworkUriMapper {
   fun mapToLocalContentUri(source: String, context: Context? = NitroModules.applicationContext): String {
     val ctx = context ?: return source
 
-    val parsed = try {
-      Uri.parse(source)
-    } catch (_: Exception) {
-      return source
-    }
+    val parsed = Uri.parse(source)
 
     val scheme = parsed.scheme?.lowercase() ?: return source
 
@@ -52,10 +48,13 @@ object ArtworkUriMapper {
 
   fun extractSourceUri(uri: Uri): Uri? {
     val source = uri.getQueryParameter(PARAM_SOURCE_URI) ?: return null
-    return try {
-      Uri.parse(source)
-    } catch (_: Exception) {
-      null
+    val parsed = Uri.parse(source)
+    val scheme = parsed.scheme?.lowercase() ?: return null
+
+    if (scheme != ContentResolver.SCHEME_FILE && scheme != ContentResolver.SCHEME_CONTENT) {
+      return null
     }
+
+    return parsed
   }
 }
