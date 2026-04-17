@@ -10,7 +10,7 @@ object ArtworkUriMapper {
   private const val AUTHORITY_SUFFIX = ".audiobrowser.artwork"
   private const val PARAM_SOURCE_URI = "src"
 
-  fun authorityFor(context: Context): String {
+  private fun authorityFor(context: Context): String {
     return "${context.packageName}$AUTHORITY_SUFFIX"
   }
 
@@ -36,17 +36,14 @@ object ArtworkUriMapper {
     }
 
     // Only local Android-supported artwork schemes are rewritten.
-    if (
-      scheme != ContentResolver.SCHEME_FILE &&
-        scheme != ContentResolver.SCHEME_CONTENT &&
-        scheme != ContentResolver.SCHEME_ANDROID_RESOURCE
-    ) {
+    if (scheme != ContentResolver.SCHEME_FILE && scheme != ContentResolver.SCHEME_CONTENT) {
       return source
     }
 
     return Uri.Builder()
       .scheme(ContentResolver.SCHEME_CONTENT)
       .authority(authorityFor(ctx))
+      // A path is required for the file descriptor on the `content://` uri in the `src` query parameter to be detected in Android Auto.
       .appendPath("open")
       .appendQueryParameter(PARAM_SOURCE_URI, source)
       .build()
