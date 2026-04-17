@@ -4,6 +4,7 @@ import android.content.ContentResolver
 import android.content.Context
 import android.net.Uri
 import com.margelo.nitro.NitroModules
+import java.util.Locale
 
 /** Builds app-local content:// URIs for artwork so Android Auto can open them reliably. */
 object ArtworkUriMapper {
@@ -24,7 +25,7 @@ object ArtworkUriMapper {
 
     val parsed = Uri.parse(source)
 
-    val scheme = parsed.scheme?.lowercase() ?: return source
+    val scheme = parsed.scheme?.lowercase(Locale.ROOT) ?: return source
 
     // Already mapped by this provider.
     if (scheme == ContentResolver.SCHEME_CONTENT && parsed.authority == authorityFor(ctx)) {
@@ -49,7 +50,7 @@ object ArtworkUriMapper {
   fun extractSourceUri(uri: Uri): Uri? {
     val source = uri.getQueryParameter(PARAM_SOURCE_URI) ?: return null
     val parsed = Uri.parse(source)
-    val scheme = parsed.scheme?.lowercase() ?: return null
+    val scheme = parsed.scheme?.lowercase(Locale.ROOT) ?: return null
 
     if (scheme != ContentResolver.SCHEME_FILE && scheme != ContentResolver.SCHEME_CONTENT) {
       return null

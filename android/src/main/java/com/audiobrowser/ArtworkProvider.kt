@@ -9,6 +9,7 @@ import android.os.ParcelFileDescriptor
 import com.audiobrowser.util.ArtworkUriMapper
 import java.io.File
 import java.io.FileNotFoundException
+import java.util.Locale
 
 /**
  * Proxies local artwork URIs (file://, content://) as app-local content://
@@ -20,7 +21,7 @@ class ArtworkProvider : ContentProvider() {
     val ctx = context ?: throw FileNotFoundException("Context unavailable")
 
     val sourceUri = ArtworkUriMapper.extractSourceUri(uri) ?: throw FileNotFoundException("Missing source URI")
-    val sourceScheme = sourceUri.scheme?.lowercase() ?: throw FileNotFoundException("Missing scheme")
+    val sourceScheme = sourceUri.scheme?.lowercase(Locale.ROOT) ?: throw FileNotFoundException("Missing scheme")
 
     when (sourceScheme) {
       // Open `file://` directly.
