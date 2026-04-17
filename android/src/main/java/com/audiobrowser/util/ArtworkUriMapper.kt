@@ -6,7 +6,7 @@ import android.net.Uri
 import com.margelo.nitro.NitroModules
 
 /** Builds app-local content:// URIs for artwork so Android Auto can open them reliably. */
-object ArtworkContentUriMapper {
+object ArtworkUriMapper {
   private const val AUTHORITY_SUFFIX = ".audiobrowser.artwork"
   private const val PARAM_SOURCE_URI = "src"
 
@@ -15,19 +15,13 @@ object ArtworkContentUriMapper {
   }
 
   /**
-   * Convenience wrapper that maps with Nitro app context when available.
-   * Falls back to the original source when app context is unavailable.
-   */
-  fun mapToLocalContentUriWithAppContext(source: String): String {
-    val context = NitroModules.applicationContext ?: return source
-    return mapToLocalContentUri(context, source)
-  }
-
-  /**
    * Converts supported source URIs to an app-local content URI handled by ArtworkProvider.
-   * Returns the original URI string when no conversion is required.
+   * If `context` is omitted, Nitro's application context will be used when available.
+   * Returns the original URI string when no conversion is required or context is unavailable.
    */
-  fun mapToLocalContentUri(context: Context, source: String): String {
+  fun mapToLocalContentUri(source: String, context: Context? = NitroModules.applicationContext): String {
+    val ctx = context ?: return source
+
     val parsed = try {
       Uri.parse(source)
     } catch (_: Exception) {
@@ -37,7 +31,7 @@ object ArtworkContentUriMapper {
     val scheme = parsed.scheme?.lowercase() ?: return source
 
     // Already mapped by this provider.
-    if (scheme == ContentResolver.SCHEME_CONTENT && parsed.authority == authorityFor(context)) {
+    if (scheme == ContentResolver.SCHEME_CONTENT && parsed.authority == authorityFor(ctx)) {
       return source
     }
 
@@ -52,7 +46,7 @@ object ArtworkContentUriMapper {
 
     return Uri.Builder()
       .scheme(ContentResolver.SCHEME_CONTENT)
-      .authority(authorityFor(context))
+      .authority(authorityFor(ctx))
       .appendPath("open")
       .appendQueryParameter(PARAM_SOURCE_URI, source)
       .build()

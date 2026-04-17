@@ -6,7 +6,7 @@ import android.content.ContentValues
 import android.database.Cursor
 import android.net.Uri
 import android.os.ParcelFileDescriptor
-import com.audiobrowser.util.ArtworkContentUriMapper
+import com.audiobrowser.util.ArtworkUriMapper
 import java.io.File
 import java.io.FileNotFoundException
 import java.security.MessageDigest
@@ -24,7 +24,7 @@ class ArtworkProvider : ContentProvider() {
 
     val ctx = context ?: throw FileNotFoundException("Context unavailable")
     val sourceUri =
-      ArtworkContentUriMapper.extractSourceUri(uri)
+      ArtworkUriMapper.extractSourceUri(uri)
         ?: throw FileNotFoundException("Missing source URI")
 
     val sourceScheme = sourceUri.scheme?.lowercase() ?: throw FileNotFoundException("Missing scheme")
