@@ -16,7 +16,7 @@ import java.io.FileNotFoundException
  */
 class ArtworkProvider : ContentProvider() {
 
-  override fun openFile(uri: Uri, mode: String): ParcelFileDescriptor? {
+  override fun openFile(uri: Uri, mode: String): ParcelFileDescriptor {
     val ctx = context ?: throw FileNotFoundException("Context unavailable")
 
     val sourceUri = ArtworkUriMapper.extractSourceUri(uri) ?: throw FileNotFoundException("Missing source URI")
@@ -25,14 +25,15 @@ class ArtworkProvider : ContentProvider() {
     when (sourceScheme) {
       // Open `file://` directly.
       ContentResolver.SCHEME_FILE -> {
-        val sourceFile = File(sourceUri.path)
-        if (!sourceFile.exists()) return null
+        val sourceFile = File(sourceUri.path ?: throw FileNotFoundException("Invalid file URI"))
+        if (!sourceFile.exists() || !sourceFile.isFile) throw FileNotFoundException("Source file does not exist: $sourceUri")
         return ParcelFileDescriptor.open(sourceFile, ParcelFileDescriptor.MODE_READ_ONLY)
       }
 
       // Many content providers support opening a file descriptor directly.
       ContentResolver.SCHEME_CONTENT -> {
-        ctx.contentResolver.openFileDescriptor(sourceUri, "r")?.let { return it }
+        return ctx.contentResolver.openFileDescriptor(sourceUri, "r")
+          ?: throw FileNotFoundException("Unable to open artwork URI: $sourceUri")
       }
     }
 
