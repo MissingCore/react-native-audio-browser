@@ -18,6 +18,8 @@ import java.util.Locale
 class ArtworkProvider : ContentProvider() {
 
   override fun openFile(uri: Uri, mode: String): ParcelFileDescriptor {
+    if (mode != "r") throw FileNotFoundException("Unsupported mode: $mode")
+
     val ctx = context ?: throw FileNotFoundException("Context unavailable")
 
     val sourceUri = ArtworkUriMapper.extractSourceUri(uri) ?: throw FileNotFoundException("Missing source URI")
