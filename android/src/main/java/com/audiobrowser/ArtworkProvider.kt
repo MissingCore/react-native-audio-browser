@@ -13,8 +13,8 @@ import java.io.FileNotFoundException
 import java.util.Locale
 
 /**
- * Proxies local artwork URIs (file://, content://) as app-local content://
- * URIs so Android Auto can read artwork through a stable provider endpoint.
+ * Proxies local artwork file URIs (file://) as app-local content:// URIs
+ * so Android Auto can read artwork through a stable provider endpoint.
  */
 class ArtworkProvider : ContentProvider() {
 
