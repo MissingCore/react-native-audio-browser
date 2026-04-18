@@ -3,6 +3,7 @@ package com.audiobrowser
 import android.content.ContentProvider
 import android.content.ContentResolver
 import android.content.ContentValues
+import android.content.Context
 import android.database.Cursor
 import android.net.Uri
 import android.os.ParcelFileDescriptor
@@ -26,10 +27,11 @@ class ArtworkProvider : ContentProvider() {
     val sourceScheme = sourceUri.scheme?.lowercase(Locale.ROOT) ?: throw FileNotFoundException("Missing scheme")
 
     when (sourceScheme) {
-      // Open `file://` directly.
+      // Open `file://` directly, but restrict to app-owned directories.
       ContentResolver.SCHEME_FILE -> {
         val sourceFile = File(sourceUri.path ?: throw FileNotFoundException("Invalid file URI"))
         if (!sourceFile.exists() || !sourceFile.isFile) throw FileNotFoundException("Source file does not exist: $sourceUri")
+        if (!isAllowedAppPath(sourceFile, ctx)) throw FileNotFoundException("Refused access to file outside allowed app directories: $sourceUri")
         return ParcelFileDescriptor.open(sourceFile, ParcelFileDescriptor.MODE_READ_ONLY)
       }
 
@@ -49,4 +51,27 @@ class ArtworkProvider : ContentProvider() {
   override fun insert(uri: Uri, values: ContentValues?): Uri? = null
   override fun delete(uri: Uri, selection: String?, selectionArgs: Array<String>?): Int = 0
   override fun update(uri: Uri, values: ContentValues?, selection: String?, selectionArgs: Array<String>?): Int = 0
+
+  /** Checks to see if the file we're opening belongs to us. */
+  private fun isAllowedAppPath(file: File, ctx: Context): Boolean {
+    return try {
+      val filePath = file.canonicalPath
+      val allowedRoots = listOfNotNull(
+        ctx.cacheDir?.canonicalPath,
+        ctx.filesDir?.canonicalPath,
+        ctx.externalCacheDir?.canonicalPath,
+        ctx.getExternalFilesDir(null)?.canonicalPath
+      )
+
+      for (rootPath in allowedRoots) {
+        if (filePath == rootPath || filePath.startsWith(rootPath + File.separator)) {
+          return true
+        }
+      }
+
+      false
+    } catch (_: Exception) {
+      false
+    }
+  }
 }
