@@ -93,7 +93,13 @@ class CoilBitmapLoader(
         // Use hint from media browser (Android Auto), or fall back to screen-based size
         val sizeHint = getArtworkSizeHint() ?: defaultArtworkSizePixels
 
-        val (finalUrl, headers) = transformArtworkUrl(artworkUrl, sizeHint)
+        val (finalUrl, headers) =
+          if (ArtworkUriHelper.isLocalArtworkUri(artworkUrl)) {
+            // Local URIs (content/file/resource/data) must never be rewritten with baseUrl/query.
+            artworkUrl to emptyMap()
+          } else {
+            transformArtworkUrl(artworkUrl, sizeHint)
+          }
 
         // Check if this is an SVG that needs special decoding
         val isSvg = SvgArtworkRenderer.isSvgUrl(finalUrl)
@@ -155,6 +161,10 @@ class CoilBitmapLoader(
     originalUrl: String,
     sizeHintPixels: Int? = null,
   ): Pair<String, Map<String, String>> {
+    if (ArtworkUriHelper.isLocalArtworkUri(originalUrl)) {
+      return originalUrl to emptyMap()
+    }
+
     val config = getArtworkConfig()
 
     // No config - return original URL with no headers
@@ -235,6 +245,11 @@ class CoilBitmapLoader(
 
     // Treat empty string as null for artwork
     val trackArtwork = track.artwork?.takeIf { it.isNotEmpty() }
+
+    // Never rewrite local/content/data artwork URIs with request config.
+    if (trackArtwork != null && ArtworkUriHelper.isLocalArtworkUri(trackArtwork)) {
+      return ImageSource(uri = trackArtwork, method = null, headers = null, body = null)
+    }
 
     Timber.d("transformArtworkUrlForTrack: track='${track.title}', artwork='$trackArtwork', hasConfig=${effectiveArtworkConfig != null}")
 

@@ -26,8 +26,10 @@ object TrackFactory {
   fun toMedia3(track: Track): MediaItem {
     val extras = MediaExtrasBuilder.build(track)
 
-    // Use transformed artworkSource.uri if available, otherwise fall back to original artwork
-    val artworkUri = track.artworkSource?.uri ?: track.artwork
+    // Use transformed artworkSource.uri if available, otherwise fall back to original artwork.
+    // Then convert to a `content://` URI if possible.
+    val artworkUri = (track.artworkSource?.uri ?: track.artwork)
+      ?.let { ArtworkUriMapper.mapToLocalContentUri(it) }
 
     val mediaMetadata =
       MediaMetadata.Builder()
@@ -77,8 +79,10 @@ object TrackFactory {
   ): MediaItem {
     val extras = MediaExtrasBuilder.build(track)
 
-    // Use transformed artworkSource.uri if available, otherwise fall back to original artwork
-    val artworkUrl = track.artworkSource?.uri ?: track.artwork
+    // Use transformed artworkSource.uri if available, otherwise fall back to original artwork.
+    // Then convert to a `content://` URI if possible.
+    val artworkUrl = (track.artworkSource?.uri ?: track.artwork)
+      ?.let { ArtworkUriMapper.mapToLocalContentUri(it, context) }
 
     // Build metadata with SVG support
     val metadataBuilder = MediaMetadata.Builder()

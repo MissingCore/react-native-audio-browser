@@ -10,8 +10,10 @@ object ResolvedTrackFactory {
   fun toMedia3(resolvedTrack: ResolvedTrack): MediaItem {
     val extras = MediaExtrasBuilder.build(resolvedTrack)
 
-    // Use transformed artworkSource.uri if available, otherwise fall back to original artwork
-    val artworkUri = resolvedTrack.artworkSource?.uri ?: resolvedTrack.artwork
+    // Use transformed artworkSource.uri if available, otherwise fall back to original artwork.
+    // Then convert to a `content://` URI if possible.
+    val artworkUri = (resolvedTrack.artworkSource?.uri ?: resolvedTrack.artwork)
+      ?.let { ArtworkUriMapper.mapToLocalContentUri(it) }
 
     val mediaMetadata =
       MediaMetadata.Builder()

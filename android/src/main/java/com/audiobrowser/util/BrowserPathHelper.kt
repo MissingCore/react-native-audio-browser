@@ -137,8 +137,8 @@ object BrowserPathHelper {
    * - buildUrl(null, "http://full.url") → "http://full.url"
    */
   fun buildUrl(baseUrl: String?, path: String): String {
-    // If path is already a full URL, return it as-is
-    if (path.startsWith("http://") || path.startsWith("https://")) {
+    // Keep absolute URIs (http, https, content, file, android.resource, data, etc.) untouched.
+    if (ArtworkUriHelper.isAbsoluteUri(path)) {
       return path
     }
 

@@ -32,5 +32,11 @@
                 <action android:name="android.intent.action.MEDIA_BUTTON" />
             </intent-filter>
         </receiver>
+        <!-- Artwork content provider for Android Auto / AAOS artwork loading -->
+        <provider
+            android:name="com.audiobrowser.ArtworkProvider"
+            android:authorities="${applicationId}.audiobrowser.artwork"
+            android:exported="true"
+            android:grantUriPermissions="true" />
     </application>
 </manifest>
