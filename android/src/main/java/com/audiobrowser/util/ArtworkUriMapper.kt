@@ -33,9 +33,7 @@ object ArtworkUriMapper {
     }
 
     // Only local Android-supported artwork schemes are rewritten.
-    if (scheme != ContentResolver.SCHEME_FILE && scheme != ContentResolver.SCHEME_CONTENT) {
-      return source
-    }
+    if (scheme != ContentResolver.SCHEME_FILE) return source
 
     return Uri.Builder()
       .scheme(ContentResolver.SCHEME_CONTENT)
@@ -52,10 +50,7 @@ object ArtworkUriMapper {
     val parsed = Uri.parse(source)
     val scheme = parsed.scheme?.lowercase(Locale.ROOT) ?: return null
 
-    if (scheme != ContentResolver.SCHEME_FILE && scheme != ContentResolver.SCHEME_CONTENT) {
-      return null
-    }
-
+    if (scheme != ContentResolver.SCHEME_FILE) return null
     return parsed
   }
 }
