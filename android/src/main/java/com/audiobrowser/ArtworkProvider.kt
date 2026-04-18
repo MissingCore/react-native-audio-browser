@@ -24,25 +24,18 @@ class ArtworkProvider : ContentProvider() {
     val ctx = context ?: throw FileNotFoundException("Context unavailable")
 
     val sourceUri = ArtworkUriMapper.extractSourceUri(uri) ?: throw FileNotFoundException("Missing source URI")
-    val sourceScheme = sourceUri.scheme?.lowercase(Locale.ROOT) ?: throw FileNotFoundException("Missing scheme")
+    val scheme = sourceUri.scheme?.lowercase(Locale.ROOT) ?: throw FileNotFoundException("Missing scheme")
 
-    when (sourceScheme) {
-      // Open `file://` directly, but restrict to app-owned directories.
-      ContentResolver.SCHEME_FILE -> {
-        val sourceFile = File(sourceUri.path ?: throw FileNotFoundException("Invalid file URI"))
-        if (!sourceFile.exists() || !sourceFile.isFile) throw FileNotFoundException("Source file does not exist: $sourceUri")
-        if (!isAllowedAppPath(sourceFile, ctx)) throw FileNotFoundException("Refused access to file outside allowed app directories: $sourceUri")
-        return ParcelFileDescriptor.open(sourceFile, ParcelFileDescriptor.MODE_READ_ONLY)
-      }
-
-      // Many content providers support opening a file descriptor directly.
-      ContentResolver.SCHEME_CONTENT -> {
-        return ctx.contentResolver.openFileDescriptor(sourceUri, "r")
-          ?: throw FileNotFoundException("Unable to open artwork URI: $sourceUri")
-      }
+    // Only `file://` sources are allowed. Reject `content://` and any other schemes.
+    if (scheme != ContentResolver.SCHEME_FILE) {
+      throw FileNotFoundException("Only file:// artwork URIs are supported; got: $scheme")
     }
 
-    throw FileNotFoundException("Unsupported artwork URI scheme: $sourceScheme")
+    val sourceFile = File(sourceUri.path ?: throw FileNotFoundException("Invalid file URI"))
+    if (!sourceFile.exists() || !sourceFile.isFile) throw FileNotFoundException("Source file does not exist: $sourceUri")
+    if (!isAllowedAppPath(sourceFile, ctx)) throw FileNotFoundException("Refused access to file outside allowed app directories: $sourceUri")
+
+    return ParcelFileDescriptor.open(sourceFile, ParcelFileDescriptor.MODE_READ_ONLY)
   }
 
   override fun getType(uri: Uri): String = "image/*"
