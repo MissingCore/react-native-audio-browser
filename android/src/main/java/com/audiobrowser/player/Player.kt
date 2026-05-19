@@ -14,6 +14,7 @@ import androidx.media3.datasource.cache.LeastRecentlyUsedCacheEvictor
 import androidx.media3.datasource.cache.SimpleCache
 import androidx.media3.exoplayer.DefaultRenderersFactory
 import androidx.media3.exoplayer.ExoPlayer
+import androidx.media3.exoplayer.audio.DefaultAudioSink
 import androidx.media3.exoplayer.upstream.DefaultBandwidthMeter
 import androidx.media3.session.MediaLibraryService
 import androidx.media3.session.MediaSession
@@ -506,7 +507,13 @@ class Player(internal val context: Context) {
     }
 
     // Recreate ExoPlayer with new setup options
+    val audioProcessor = HighSampleRateResamplingAudioProcessor()
+    val audioSink = DefaultAudioSink.Builder(context)
+      .setAudioProcessors(arrayOf(audioProcessor))
+      .build()
+
     val renderer = DefaultRenderersFactory(context)
+      .setAudioSink(audioSink)
     renderer.setExtensionRendererMode(DefaultRenderersFactory.EXTENSION_RENDERER_MODE_PREFER)
 
     // Create bandwidth meter for adaptive bitrate selection in HLS/DASH
