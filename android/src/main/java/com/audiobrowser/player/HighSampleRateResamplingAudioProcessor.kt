@@ -18,10 +18,12 @@ class HighSampleRateResamplingAudioProcessor : AudioProcessor {
   private var outputBuffer: ByteBuffer = AudioProcessor.EMPTY_BUFFER
   private var inputEnded = false
   private var resampleRatio = 1.0
+  private var bytesPerSample = 0
 
   override fun configure(inputAudioFormat: AudioProcessor.AudioFormat): AudioProcessor.AudioFormat {
     inputFormat = inputAudioFormat
     activeProcessor = shouldResample(inputAudioFormat)
+    bytesPerSample = inputAudioFormat.bytesPerFrame / inputAudioFormat.channelCount
 
     outputFormat = if (activeProcessor) {
       resampleRatio = inputAudioFormat.sampleRate.toDouble() / MAX_OUTPUT_SAMPLE_RATE
@@ -40,8 +42,7 @@ class HighSampleRateResamplingAudioProcessor : AudioProcessor {
   override fun isActive() = activeProcessor
 
   override fun queueInput(inputBuffer: ByteBuffer) {
-    if (!activeProcessor || !inputBuffer.hasRemaining()) {
-      inputBuffer.position(inputBuffer.limit())
+    if (!inputBuffer.hasRemaining()) {
       return
     }
 
@@ -49,13 +50,12 @@ class HighSampleRateResamplingAudioProcessor : AudioProcessor {
     val frameSize = inputFormat.bytesPerFrame
     val inputFrames = source.remaining() / frameSize
     if (inputFrames == 0) {
-      inputBuffer.position(inputBuffer.limit())
       return
     }
 
     val outputFrames = max(
       1,
-      kotlin.math.ceil(inputFrames * MAX_OUTPUT_SAMPLE_RATE / inputFormat.sampleRate.toDouble()).toInt(),
+      ceil(inputFrames * MAX_OUTPUT_SAMPLE_RATE / inputFormat.sampleRate.toDouble()).toInt(),
     )
     val outputBytes = outputFrames * frameSize
     val output = ByteBuffer.allocateDirect(outputBytes).order(ByteOrder.nativeOrder())
@@ -63,13 +63,13 @@ class HighSampleRateResamplingAudioProcessor : AudioProcessor {
     for (outputFrame in 0 until outputFrames) {
       val position = outputFrame * resampleRatio
       val leftIndex = min(inputFrames - 1, position.toInt())
-      val rightIndex = min(inputFrames - 1, leftIndex + 1)
+      val rightIndex = if (leftIndex < inputFrames - 1) leftIndex + 1 else leftIndex
       val fraction = (position - leftIndex).toFloat()
 
       for (channel in 0 until inputFormat.channelCount) {
         val leftSample = readSample(source, leftIndex, channel)
-        val rightSample = readSample(source, rightIndex, channel)
-        val interpolated = if (leftIndex == rightIndex) leftSample else leftSample + (rightSample - leftSample) * fraction
+        val rightSample = if (leftIndex == rightIndex) leftSample else readSample(source, rightIndex, channel)
+        val interpolated = leftSample + (rightSample - leftSample) * fraction
         writeSample(output, interpolated)
       }
     }
@@ -108,6 +108,7 @@ class HighSampleRateResamplingAudioProcessor : AudioProcessor {
     outputBuffer = AudioProcessor.EMPTY_BUFFER
     inputEnded = false
     resampleRatio = 1.0
+    bytesPerSample = 0
   }
 
   private fun shouldResample(format: AudioProcessor.AudioFormat): Boolean {
@@ -125,41 +126,41 @@ class HighSampleRateResamplingAudioProcessor : AudioProcessor {
   }
 
   private fun readSample(source: ByteBuffer, frameIndex: Int, channelIndex: Int): Float {
-    val samplePosition = (frameIndex * inputFormat.channelCount + channelIndex) * inputFormat.bytesPerFrame / inputFormat.channelCount
+    val byteOffset = frameIndex * inputFormat.bytesPerFrame + channelIndex * bytesPerSample
     return when (inputFormat.encoding) {
-      C.ENCODING_PCM_16BIT -> source.getShort(samplePosition).toFloat() / Short.MAX_VALUE
+      C.ENCODING_PCM_16BIT -> source.getShort(byteOffset).toFloat() / 32768f
       C.ENCODING_PCM_24BIT -> {
-        val value = (source.get(samplePosition + 2).toInt() shl 24) or
-          ((source.get(samplePosition + 1).toInt() and 0xFF) shl 16) or
-          ((source.get(samplePosition).toInt() and 0xFF) shl 8)
-        (value.toInt() shr 8).toFloat() / 8_388_608f
+        val b0 = source.get(byteOffset).toInt() and 0xFF
+        val b1 = source.get(byteOffset + 1).toInt() and 0xFF
+        val b2 = source.get(byteOffset + 2).toByte().toInt()
+        val value = (b2 shl 16) or (b1 shl 8) or b0
+        value.toFloat() / 8_388_608f
       }
-      C.ENCODING_PCM_32BIT -> source.getInt(samplePosition).toFloat() / 2_147_483_648f
-      C.ENCODING_PCM_FLOAT -> source.getFloat(samplePosition)
+      C.ENCODING_PCM_32BIT -> source.getInt(byteOffset).toFloat() / 2_147_483_648f
+      C.ENCODING_PCM_FLOAT -> source.getFloat(byteOffset)
       else -> 0f
     }
   }
 
   private fun writeSample(output: ByteBuffer, sample: Float) {
+    val clamped = max(-1f, min(1f, sample))
     when (inputFormat.encoding) {
       C.ENCODING_PCM_16BIT -> {
-        val clamped = max(Short.MIN_VALUE.toFloat(), min(Short.MAX_VALUE.toFloat(), sample * Short.MAX_VALUE))
-        output.putShort(clamped.roundToInt().toShort())
+        output.putShort((clamped * 32767f).roundToInt().toShort())
       }
       C.ENCODING_PCM_24BIT -> {
-        val scaled = max(-8_388_608f, min(8_388_607f, sample * 8_388_607f)).roundToInt()
-        output.put((scaled shr 0 and 0xFF).toByte())
-        output.put((scaled shr 8 and 0xFF).toByte())
-        output.put((scaled shr 16 and 0xFF).toByte())
+        val value = (clamped * 8_388_607f).roundToInt()
+        output.put((value and 0xFF).toByte())
+        output.put(((value shr 8) and 0xFF).toByte())
+        output.put(((value shr 16) and 0xFF).toByte())
       }
       C.ENCODING_PCM_32BIT -> {
-        val clamped = max(Int.MIN_VALUE.toFloat(), min(Int.MAX_VALUE.toFloat(), sample * 2_147_483_647f))
-        output.putInt(clamped.roundToInt())
+        output.putInt((clamped * 2_147_483_647f).roundToInt())
       }
-      C.ENCODING_PCM_FLOAT -> output.putFloat(sample)
-      else -> {
-        // No-op for unsupported encodings.
+      C.ENCODING_PCM_FLOAT -> {
+        output.putFloat(clamped)
       }
+      else -> {}
     }
   }
 
