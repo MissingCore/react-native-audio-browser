@@ -521,7 +521,6 @@ class Player(internal val context: Context) {
         }
 
         return DefaultAudioSink.Builder(context)
-          .setEnableFloatOutput(false)
           .setAudioProcessorChain(
             DefaultAudioSink.DefaultAudioProcessorChain(*processors.toTypedArray())
           )
