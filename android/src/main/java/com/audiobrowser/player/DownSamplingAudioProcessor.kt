@@ -132,8 +132,11 @@ class DownSamplingAudioProcessor : AudioProcessor {
   //#region Buffer Helpers
   private fun readSample(source: ByteBuffer, frameIndex: Int, channelIndex: Int): Float {
     val byteOffset = frameIndex * inputFormat.bytesPerFrame + channelIndex * bytesPerSample
+    // Guard against invalid offsets to avoid BufferUnderflowException
+    if (byteOffset < 0 || byteOffset + bytesPerSample > source.limit()) return 0f
+
     return when (inputFormat.encoding) {
-      C.ENCODING_PCM_16BIT -> source.getShort(byteOffset).toFloat() / 32768f
+      C.ENCODING_PCM_16BIT -> source.getShort(byteOffset).toInt().toFloat() / 32768f
       C.ENCODING_PCM_FLOAT -> source.getFloat(byteOffset)
       else -> 0f
     }
@@ -141,14 +144,21 @@ class DownSamplingAudioProcessor : AudioProcessor {
 
   private fun writeSample(output: ByteBuffer, sample: Float) {
     val clamped = max(-1f, min(1f, sample))
+    // Ensure there is enough space in the output buffer
+    if (output.remaining() < bytesPerSample) return
+
     when (inputFormat.encoding) {
-      C.ENCODING_PCM_16BIT -> output.putShort((clamped * 32767f).roundToInt().toShort())
+      C.ENCODING_PCM_16BIT -> output.putShort((clamped * 32767f).roundToInt().coerceIn(Short.MIN_VALUE.toInt(), Short.MAX_VALUE.toInt()).toShort())
       C.ENCODING_PCM_FLOAT -> output.putFloat(clamped)
       else -> {}
     }
   }
 
   private fun appendBuffers(first: ByteBuffer, second: ByteBuffer): ByteBuffer {
+    // If one of the buffers is empty, avoid allocation and return the other
+    if (!first.hasRemaining()) return second
+    if (!second.hasRemaining()) return first
+
     val combined = ByteBuffer.allocateDirect(first.remaining() + second.remaining())
       .order(NATIVE_ORDER)
     combined.put(first)
