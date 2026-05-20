@@ -33,7 +33,7 @@ class DownSamplingAudioProcessor : AudioProcessor {
     outputFormat = if (activeProcessor) {
       resampleRatio = inputAudioFormat.sampleRate.toDouble() / MAX_SAMPLE_RATE
       AudioProcessor.AudioFormat(
-        MAX_SAMPLE_RATE,
+        (inputAudioFormat.sampleRate / resampleRatio).toInt(),
         inputAudioFormat.channelCount,
         inputAudioFormat.encoding,
       )
@@ -62,7 +62,7 @@ class DownSamplingAudioProcessor : AudioProcessor {
 
     val outputFrames = max(
       1,
-      ceil(inputFrames * MAX_SAMPLE_RATE / inputFormat.sampleRate.toDouble()).toInt(),
+      ceil(inputFrames / resampleRatio).toInt(),
     )
     val outputBytes = outputFrames * frameSize
     val output = ByteBuffer.allocateDirect(outputBytes).order(ByteOrder.nativeOrder())
