@@ -2,6 +2,8 @@ package com.audiobrowser.player
 
 import androidx.media3.common.C
 import androidx.media3.common.audio.AudioProcessor
+import androidx.media3.common.audio.AudioProcessor.AudioFormat
+import androidx.media3.common.util.UnstableApi
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
 import kotlin.math.ceil
@@ -9,42 +11,54 @@ import kotlin.math.max
 import kotlin.math.min
 import kotlin.math.roundToInt
 
-private const val MAX_SAMPLE_RATE = 192_000
-
+@UnstableApi
 class DownSamplingAudioProcessor : AudioProcessor {
 
-  private var activeProcessor = false
-  private var inputFormat: AudioProcessor.AudioFormat = AudioProcessor.AudioFormat.NOT_SET
-  private var outputFormat: AudioProcessor.AudioFormat = AudioProcessor.AudioFormat.NOT_SET
+  companion object {
+    private const val MAX_SAMPLE_RATE = 192_000
+    private val SUPPORTED_ENCODINGS = setOf(
+      C.ENCODING_PCM_FLOAT,
+      C.ENCODING_PCM_16BIT,
+    )
+
+    private val NATIVE_ORDER = ByteOrder.nativeOrder()
+  }
+
+  private var inputFormat: AudioFormat = AudioFormat.NOT_SET
+  private var outputFormat: AudioFormat = AudioFormat.NOT_SET
   private var outputBuffer: ByteBuffer = AudioProcessor.EMPTY_BUFFER
   private var inputEnded = false
   private var resampleRatio = 1.0
   private var bytesPerSample = 0
 
-  override fun configure(inputAudioFormat: AudioProcessor.AudioFormat): AudioProcessor.AudioFormat {
-    inputFormat = inputAudioFormat
-    activeProcessor = shouldDownsample(inputAudioFormat)
-    bytesPerSample = if (inputAudioFormat.channelCount > 0) {
-      inputAudioFormat.bytesPerFrame / inputAudioFormat.channelCount
-    } else {
-      0
+  override fun configure(inputAudioFormat: AudioFormat): AudioFormat {
+    val shouldDownsample = (
+      inputAudioFormat.encoding in SUPPORTED_ENCODINGS &&
+      inputAudioFormat.channelCount > 0 &&
+      inputAudioFormat.sampleRate > MAX_SAMPLE_RATE
+    )
+
+    if (!shouldDownsample) {
+      reset()
+      return inputAudioFormat
     }
 
-    outputFormat = if (activeProcessor) {
-      resampleRatio = inputAudioFormat.sampleRate.toDouble() / MAX_SAMPLE_RATE
-      AudioProcessor.AudioFormat(
-        (inputAudioFormat.sampleRate / resampleRatio).toInt(),
-        inputAudioFormat.channelCount,
-        inputAudioFormat.encoding,
-      )
-    } else {
-      AudioProcessor.AudioFormat.NOT_SET
-    }
+    resampleRatio = inputAudioFormat.sampleRate.toDouble() / MAX_SAMPLE_RATE
+    bytesPerSample = inputAudioFormat.bytesPerFrame / inputAudioFormat.channelCount
+
+    inputFormat = inputAudioFormat
+    outputFormat = AudioFormat(
+      MAX_SAMPLE_RATE,
+      inputAudioFormat.channelCount,
+      inputAudioFormat.encoding,
+    )
 
     return outputFormat
   }
 
-  override fun isActive() = activeProcessor
+  override fun isActive(): Boolean {
+    return outputFormat != AudioFormat.NOT_SET
+  }
 
   override fun queueInput(inputBuffer: ByteBuffer) {
     if (!inputBuffer.hasRemaining() || !isActive()) {
@@ -52,7 +66,7 @@ class DownSamplingAudioProcessor : AudioProcessor {
       return
     }
 
-    val source = inputBuffer.slice().order(ByteOrder.nativeOrder())
+    val source = inputBuffer.slice().order(NATIVE_ORDER)
     val frameSize = inputFormat.bytesPerFrame
     val inputFrames = source.remaining() / frameSize
     if (inputFrames == 0) {
@@ -60,12 +74,9 @@ class DownSamplingAudioProcessor : AudioProcessor {
       return
     }
 
-    val outputFrames = max(
-      1,
-      ceil(inputFrames / resampleRatio).toInt(),
-    )
+    val outputFrames = max(1, ceil(inputFrames / resampleRatio).toInt())
     val outputBytes = outputFrames * frameSize
-    val output = ByteBuffer.allocateDirect(outputBytes).order(ByteOrder.nativeOrder())
+    val output = ByteBuffer.allocateDirect(outputBytes).order(NATIVE_ORDER)
 
     for (outputFrame in 0 until outputFrames) {
       val position = outputFrame * resampleRatio
@@ -101,7 +112,9 @@ class DownSamplingAudioProcessor : AudioProcessor {
     return output
   }
 
-  override fun isEnded() = inputEnded && outputBuffer == AudioProcessor.EMPTY_BUFFER
+  override fun isEnded(): Boolean {
+    return inputEnded && outputBuffer == AudioProcessor.EMPTY_BUFFER
+  }
 
   override fun flush() {
     outputBuffer = AudioProcessor.EMPTY_BUFFER
@@ -109,23 +122,14 @@ class DownSamplingAudioProcessor : AudioProcessor {
   }
 
   override fun reset() {
-    activeProcessor = false
-    inputFormat = AudioProcessor.AudioFormat.NOT_SET
-    outputFormat = AudioProcessor.AudioFormat.NOT_SET
-    outputBuffer = AudioProcessor.EMPTY_BUFFER
-    inputEnded = false
+    flush()
+    inputFormat = AudioFormat.NOT_SET
+    outputFormat = AudioFormat.NOT_SET
     resampleRatio = 1.0
     bytesPerSample = 0
   }
 
-  private fun shouldDownsample(format: AudioProcessor.AudioFormat): Boolean {
-    return format.sampleRate > MAX_SAMPLE_RATE && format.channelCount > 0 && isSupportedEncoding(format.encoding)
-  }
-
-  private fun isSupportedEncoding(encoding: Int): Boolean {
-    return encoding == C.ENCODING_PCM_FLOAT || encoding == C.ENCODING_PCM_16BIT
-  }
-
+  //#region Buffer Helpers
   private fun readSample(source: ByteBuffer, frameIndex: Int, channelIndex: Int): Float {
     val byteOffset = frameIndex * inputFormat.bytesPerFrame + channelIndex * bytesPerSample
     return when (inputFormat.encoding) {
@@ -146,10 +150,11 @@ class DownSamplingAudioProcessor : AudioProcessor {
 
   private fun appendBuffers(first: ByteBuffer, second: ByteBuffer): ByteBuffer {
     val combined = ByteBuffer.allocateDirect(first.remaining() + second.remaining())
-      .order(ByteOrder.nativeOrder())
+      .order(NATIVE_ORDER)
     combined.put(first)
     combined.put(second)
     combined.flip()
     return combined
   }
+  //#endregion
 }
