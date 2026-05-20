@@ -514,12 +514,15 @@ class Player(internal val context: Context) {
         enableFloatOutput: Boolean,
         enableAudioOutputPlaybackParams: Boolean,
       ): AudioSink? {
+        val processors = mutableListOf<AudioProcessor>()
+        if (setupOptions.useDownSamplingProcessor) {
+          processors.add(DownSamplingAudioProcessor())
+        }
+
         return DefaultAudioSink.Builder(context)
           .setEnableFloatOutput(false)
           .setAudioProcessorChain(
-            DefaultAudioSink.DefaultAudioProcessorChain(
-              DownSamplingAudioProcessor()
-            )
+            DefaultAudioSink.DefaultAudioProcessorChain(*processors.toTypedArray())
           )
           .build()
       }
