@@ -508,18 +508,20 @@ class Player(internal val context: Context) {
     }
 
     // Recreate ExoPlayer with new setup options
-    val audioProcessor = HighSampleRateResamplingAudioProcessor()
-    val audioSink = DefaultAudioSink.Builder(context)
-      .setAudioProcessors(arrayOf(audioProcessor))
-      .build()
-
     val renderer = object : DefaultRenderersFactory(context) {
       override fun buildAudioSink(
         context: Context,
         enableFloatOutput: Boolean,
         enableAudioOutputPlaybackParams: Boolean,
       ): AudioSink? {
-        return audioSink
+        return DefaultAudioSink.Builder(context)
+          .setEnableFloatOutput(false)
+          .setAudioProcessorChain(
+            DefaultAudioSink.DefaultAudioProcessorChain(
+              DownSamplingAudioProcessor()
+            )
+          )
+          .build()
       }
     }
     renderer.setExtensionRendererMode(DefaultRenderersFactory.EXTENSION_RENDERER_MODE_PREFER)

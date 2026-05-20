@@ -9,9 +9,10 @@ import kotlin.math.max
 import kotlin.math.min
 import kotlin.math.roundToInt
 
-private const val MAX_OUTPUT_SAMPLE_RATE = 192_000
+private const val MAX_SAMPLE_RATE = 192_000
 
-class HighSampleRateResamplingAudioProcessor : AudioProcessor {
+class DownSamplingAudioProcessor : AudioProcessor {
+
   private var activeProcessor = false
   private var inputFormat: AudioProcessor.AudioFormat = AudioProcessor.AudioFormat.NOT_SET
   private var outputFormat: AudioProcessor.AudioFormat = AudioProcessor.AudioFormat.NOT_SET
@@ -22,13 +23,17 @@ class HighSampleRateResamplingAudioProcessor : AudioProcessor {
 
   override fun configure(inputAudioFormat: AudioProcessor.AudioFormat): AudioProcessor.AudioFormat {
     inputFormat = inputAudioFormat
-    activeProcessor = shouldResample(inputAudioFormat)
-    bytesPerSample = inputAudioFormat.bytesPerFrame / inputAudioFormat.channelCount
+    activeProcessor = shouldDownsample(inputAudioFormat)
+    bytesPerSample = if (inputAudioFormat.channelCount > 0) {
+      inputAudioFormat.bytesPerFrame / inputAudioFormat.channelCount
+    } else {
+      0
+    }
 
     outputFormat = if (activeProcessor) {
-      resampleRatio = inputAudioFormat.sampleRate.toDouble() / MAX_OUTPUT_SAMPLE_RATE
+      resampleRatio = inputAudioFormat.sampleRate.toDouble() / MAX_SAMPLE_RATE
       AudioProcessor.AudioFormat(
-        MAX_OUTPUT_SAMPLE_RATE,
+        MAX_SAMPLE_RATE,
         inputAudioFormat.channelCount,
         inputAudioFormat.encoding,
       )
@@ -42,7 +47,8 @@ class HighSampleRateResamplingAudioProcessor : AudioProcessor {
   override fun isActive() = activeProcessor
 
   override fun queueInput(inputBuffer: ByteBuffer) {
-    if (!inputBuffer.hasRemaining()) {
+    if (!inputBuffer.hasRemaining() || !isActive()) {
+      inputBuffer.position(inputBuffer.limit())
       return
     }
 
@@ -50,12 +56,13 @@ class HighSampleRateResamplingAudioProcessor : AudioProcessor {
     val frameSize = inputFormat.bytesPerFrame
     val inputFrames = source.remaining() / frameSize
     if (inputFrames == 0) {
+      inputBuffer.position(inputBuffer.limit())
       return
     }
 
     val outputFrames = max(
       1,
-      ceil(inputFrames * MAX_OUTPUT_SAMPLE_RATE / inputFormat.sampleRate.toDouble()).toInt(),
+      ceil(inputFrames * MAX_SAMPLE_RATE / inputFormat.sampleRate.toDouble()).toInt(),
     )
     val outputBytes = outputFrames * frameSize
     val output = ByteBuffer.allocateDirect(outputBytes).order(ByteOrder.nativeOrder())
@@ -84,6 +91,10 @@ class HighSampleRateResamplingAudioProcessor : AudioProcessor {
     inputBuffer.position(inputBuffer.limit())
   }
 
+  override fun queueEndOfStream() {
+    inputEnded = true
+  }
+
   override fun getOutput(): ByteBuffer {
     val output = outputBuffer
     outputBuffer = AudioProcessor.EMPTY_BUFFER
@@ -92,11 +103,7 @@ class HighSampleRateResamplingAudioProcessor : AudioProcessor {
 
   override fun isEnded() = inputEnded && outputBuffer == AudioProcessor.EMPTY_BUFFER
 
-  override fun queueEndOfStream() {
-    inputEnded = true
-  }
-
-  override fun flush(streamMetadata: AudioProcessor.StreamMetadata) {
+  override fun flush() {
     outputBuffer = AudioProcessor.EMPTY_BUFFER
     inputEnded = false
   }
@@ -111,32 +118,18 @@ class HighSampleRateResamplingAudioProcessor : AudioProcessor {
     bytesPerSample = 0
   }
 
-  private fun shouldResample(format: AudioProcessor.AudioFormat): Boolean {
-    return format.sampleRate > MAX_OUTPUT_SAMPLE_RATE && isLinearPcm(format.encoding)
+  private fun shouldDownsample(format: AudioProcessor.AudioFormat): Boolean {
+    return format.sampleRate > MAX_SAMPLE_RATE && format.channelCount > 0 && isSupportedEncoding(format.encoding)
   }
 
-  private fun isLinearPcm(encoding: Int): Boolean {
-    return when (encoding) {
-      C.ENCODING_PCM_16BIT,
-      C.ENCODING_PCM_24BIT,
-      C.ENCODING_PCM_32BIT,
-      C.ENCODING_PCM_FLOAT -> true
-      else -> false
-    }
+  private fun isSupportedEncoding(encoding: Int): Boolean {
+    return encoding == C.ENCODING_PCM_FLOAT || encoding == C.ENCODING_PCM_16BIT
   }
 
   private fun readSample(source: ByteBuffer, frameIndex: Int, channelIndex: Int): Float {
     val byteOffset = frameIndex * inputFormat.bytesPerFrame + channelIndex * bytesPerSample
     return when (inputFormat.encoding) {
       C.ENCODING_PCM_16BIT -> source.getShort(byteOffset).toFloat() / 32768f
-      C.ENCODING_PCM_24BIT -> {
-        val b0 = source.get(byteOffset).toInt() and 0xFF
-        val b1 = source.get(byteOffset + 1).toInt() and 0xFF
-        val b2 = source.get(byteOffset + 2).toByte().toInt()
-        val value = (b2 shl 16) or (b1 shl 8) or b0
-        value.toFloat() / 8_388_608f
-      }
-      C.ENCODING_PCM_32BIT -> source.getInt(byteOffset).toFloat() / 2_147_483_648f
       C.ENCODING_PCM_FLOAT -> source.getFloat(byteOffset)
       else -> 0f
     }
@@ -145,27 +138,15 @@ class HighSampleRateResamplingAudioProcessor : AudioProcessor {
   private fun writeSample(output: ByteBuffer, sample: Float) {
     val clamped = max(-1f, min(1f, sample))
     when (inputFormat.encoding) {
-      C.ENCODING_PCM_16BIT -> {
-        output.putShort((clamped * 32767f).roundToInt().toShort())
-      }
-      C.ENCODING_PCM_24BIT -> {
-        val value = (clamped * 8_388_607f).roundToInt()
-        output.put((value and 0xFF).toByte())
-        output.put(((value shr 8) and 0xFF).toByte())
-        output.put(((value shr 16) and 0xFF).toByte())
-      }
-      C.ENCODING_PCM_32BIT -> {
-        output.putInt((clamped * 2_147_483_647f).roundToInt())
-      }
-      C.ENCODING_PCM_FLOAT -> {
-        output.putFloat(clamped)
-      }
+      C.ENCODING_PCM_16BIT -> output.putShort((clamped * 32767f).roundToInt().toShort())
+      C.ENCODING_PCM_FLOAT -> output.putFloat(clamped)
       else -> {}
     }
   }
 
   private fun appendBuffers(first: ByteBuffer, second: ByteBuffer): ByteBuffer {
-    val combined = ByteBuffer.allocateDirect(first.remaining() + second.remaining()).order(ByteOrder.nativeOrder())
+    val combined = ByteBuffer.allocateDirect(first.remaining() + second.remaining())
+      .order(ByteOrder.nativeOrder())
     combined.put(first)
     combined.put(second)
     combined.flip()
