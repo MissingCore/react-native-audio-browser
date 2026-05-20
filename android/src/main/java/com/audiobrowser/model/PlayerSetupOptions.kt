@@ -45,6 +45,8 @@ data class PlayerSetupOptions(
   var wakeMode: AndroidPlayerWakeMode = AndroidPlayerWakeMode.NONE,
   var audioOffload: AudioOffloadOptions? = null,
   var retryPolicy: RetryPolicy = RetryPolicy.Default,
+  // Whether to enable the DownSamplingAudioProcessor when building the audio pipeline
+  var useDownSamplingProcessor: Boolean = false,
 ) {
   /**
    * Whether automatic buffer management is enabled. True when rebufferBuffer is not explicitly set
@@ -65,6 +67,7 @@ data class PlayerSetupOptions(
       android.handleAudioBecomingNoisy?.let { handleAudioBecomingNoisy = it }
       android.audioContentType?.let { audioContentType = it }
       android.wakeMode?.let { wakeMode = it }
+      android.downsamplingProcessor?.let { useDownSamplingProcessor = it }
       android.audioOffload?.let {
         audioOffload =
           when (android.audioOffload) {

@@ -292,6 +292,14 @@ export type PartialAndroidSetupPlayerOptions = {
    * @default 'none'
    */
   wakeMode?: AndroidPlayerWakeMode
+  /**
+   * Whether to enable the DownSamplingAudioProcessor on Android's audio pipeline.
+   * When `true`, audio will be downsampled when needed to avoid very high sample
+   * rates exceeding device limits.
+   *
+   * @default false
+   */
+  downsamplingProcessor?: boolean
 }
 
 export interface AndroidSetupPlayerOptions {
@@ -400,6 +408,11 @@ export interface AndroidSetupPlayerOptions {
    * @default 'none'
    */
   wakeMode: AndroidPlayerWakeMode
+  /**
+   * Whether to enable the DownSamplingAudioProcessor on Android's audio pipeline.
+   * See `PartialAndroidSetupPlayerOptions.downsamplingProcessor` for details.
+   */
+  downsamplingProcessor: boolean
 }
 
 export interface PartialIOSSetupPlayerOptions {

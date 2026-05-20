@@ -9,11 +9,14 @@ import androidx.media3.common.HeartRating
 import androidx.media3.common.MediaItem
 import androidx.media3.common.Player as MediaPlayer
 import androidx.media3.common.TrackSelectionParameters
+import androidx.media3.common.audio.AudioProcessor
 import androidx.media3.database.StandaloneDatabaseProvider
 import androidx.media3.datasource.cache.LeastRecentlyUsedCacheEvictor
 import androidx.media3.datasource.cache.SimpleCache
 import androidx.media3.exoplayer.DefaultRenderersFactory
 import androidx.media3.exoplayer.ExoPlayer
+import androidx.media3.exoplayer.audio.AudioSink
+import androidx.media3.exoplayer.audio.DefaultAudioSink
 import androidx.media3.exoplayer.upstream.DefaultBandwidthMeter
 import androidx.media3.session.MediaLibraryService
 import androidx.media3.session.MediaSession
@@ -506,7 +509,24 @@ class Player(internal val context: Context) {
     }
 
     // Recreate ExoPlayer with new setup options
-    val renderer = DefaultRenderersFactory(context)
+    val renderer = object : DefaultRenderersFactory(context) {
+      override fun buildAudioSink(
+        context: Context,
+        enableFloatOutput: Boolean,
+        enableAudioOutputPlaybackParams: Boolean,
+      ): AudioSink? {
+        val processors = mutableListOf<AudioProcessor>()
+        if (setupOptions.useDownSamplingProcessor) {
+          processors.add(DownSamplingAudioProcessor())
+        }
+
+        return DefaultAudioSink.Builder(context)
+          .setAudioProcessorChain(
+            DefaultAudioSink.DefaultAudioProcessorChain(*processors.toTypedArray())
+          )
+          .build()
+      }
+    }
     renderer.setExtensionRendererMode(DefaultRenderersFactory.EXTENSION_RENDERER_MODE_PREFER)
 
     // Create bandwidth meter for adaptive bitrate selection in HLS/DASH
