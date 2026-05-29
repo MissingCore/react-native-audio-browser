@@ -171,7 +171,10 @@ class DownSamplingAudioProcessor : AudioProcessor {
           output.put((intSample shr 16).toByte())
         }
       }
-      C.ENCODING_PCM_32BIT -> output.putInt((clamped * 2_147_483_647f).roundToInt())
+      C.ENCODING_PCM_32BIT -> {
+        val intSample = (clamped * 2_147_483_647f).roundToInt().coerceIn(Int.MIN_VALUE, Int.MAX_VALUE)
+        output.putInt(intSample)
+      }
       C.ENCODING_PCM_FLOAT -> output.putFloat(clamped)
       else -> {}
     }
