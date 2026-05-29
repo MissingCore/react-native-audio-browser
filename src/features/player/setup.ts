@@ -300,6 +300,13 @@ export type PartialAndroidSetupPlayerOptions = {
    * @default false
    */
   downsamplingProcessor?: boolean
+  /**
+   * Whether to enable Hi-Fi audio, which will have the output become floats.
+   * This may not be supported on every device.
+   *
+   * @default false
+   */
+  hiFiMode?: boolean
 }
 
 export interface AndroidSetupPlayerOptions {
@@ -413,6 +420,11 @@ export interface AndroidSetupPlayerOptions {
    * See `PartialAndroidSetupPlayerOptions.downsamplingProcessor` for details.
    */
   downsamplingProcessor: boolean
+  /**
+   * Whether to enable Hi-Fi audio, which will have the output become floats.
+   * See `PartialAndroidSetupPlayerOptions.hiFiMode` for details.
+   */
+  hiFiMode?: boolean
 }
 
 export interface PartialIOSSetupPlayerOptions {

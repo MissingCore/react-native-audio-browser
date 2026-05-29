@@ -19,6 +19,8 @@ class DownSamplingAudioProcessor : AudioProcessor {
     private val SUPPORTED_ENCODINGS = setOf(
       C.ENCODING_PCM_FLOAT,
       C.ENCODING_PCM_16BIT,
+      C.ENCODING_PCM_24BIT,
+      C.ENCODING_PCM_32BIT,
     )
 
     private val NATIVE_ORDER = ByteOrder.nativeOrder()
@@ -137,6 +139,14 @@ class DownSamplingAudioProcessor : AudioProcessor {
 
     return when (inputFormat.encoding) {
       C.ENCODING_PCM_16BIT -> source.getShort(byteOffset).toInt().toFloat() / 32768f
+      C.ENCODING_PCM_24BIT -> {
+        val b0 = source.get(byteOffset).toInt() and 0xFF
+        val b1 = source.get(byteOffset + 1).toInt() and 0xFF
+        val b2 = source.get(byteOffset + 2).toInt()
+        val sampleInt = b0 or (b1 shl 8) or (b2 shl 16)
+        sampleInt.toFloat() / 8_388_608f
+      }
+      C.ENCODING_PCM_32BIT -> source.getInt(byteOffset).toFloat() / 2_147_483_648f
       C.ENCODING_PCM_FLOAT -> source.getFloat(byteOffset)
       else -> 0f
     }
@@ -149,6 +159,22 @@ class DownSamplingAudioProcessor : AudioProcessor {
 
     when (inputFormat.encoding) {
       C.ENCODING_PCM_16BIT -> output.putShort((clamped * 32767f).roundToInt().coerceIn(Short.MIN_VALUE.toInt(), Short.MAX_VALUE.toInt()).toShort())
+      C.ENCODING_PCM_24BIT -> {
+        val intSample = (clamped * 8_388_607f).roundToInt().coerceIn(-8_388_608, 8_388_607)
+        if (output.order() == ByteOrder.BIG_ENDIAN) {
+          output.put((intSample shr 16).toByte())
+          output.put((intSample shr 8).toByte())
+          output.put(intSample.toByte())
+        } else {
+          output.put(intSample.toByte())
+          output.put((intSample shr 8).toByte())
+          output.put((intSample shr 16).toByte())
+        }
+      }
+      C.ENCODING_PCM_32BIT -> {
+        val intSample = (clamped * 2_147_483_647f).roundToInt().coerceIn(Int.MIN_VALUE, Int.MAX_VALUE)
+        output.putInt(intSample)
+      }
       C.ENCODING_PCM_FLOAT -> output.putFloat(clamped)
       else -> {}
     }

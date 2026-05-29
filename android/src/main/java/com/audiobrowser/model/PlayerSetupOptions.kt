@@ -47,6 +47,8 @@ data class PlayerSetupOptions(
   var retryPolicy: RetryPolicy = RetryPolicy.Default,
   // Whether to enable the DownSamplingAudioProcessor when building the audio pipeline
   var useDownSamplingProcessor: Boolean = false,
+  // Whether to enable high-fidelity (float) output when building the audio sink
+  var hiFiMode: Boolean = false,
 ) {
   /**
    * Whether automatic buffer management is enabled. True when rebufferBuffer is not explicitly set
@@ -68,6 +70,7 @@ data class PlayerSetupOptions(
       android.audioContentType?.let { audioContentType = it }
       android.wakeMode?.let { wakeMode = it }
       android.downsamplingProcessor?.let { useDownSamplingProcessor = it }
+      android.hiFiMode?.let { hiFiMode = it }
       android.audioOffload?.let {
         audioOffload =
           when (android.audioOffload) {
