@@ -7,6 +7,7 @@ import android.content.Context
 import android.database.Cursor
 import android.net.Uri
 import android.os.ParcelFileDescriptor
+import com.audiobrowser.util.ArtworkSecurityConfig
 import com.audiobrowser.util.ArtworkUriMapper
 import java.io.File
 import java.io.FileNotFoundException
@@ -32,10 +33,11 @@ class ArtworkProvider : ContentProvider() {
     }
 
     val sourceFile = File(sourceUri.path ?: throw FileNotFoundException("Invalid file URI"))
-    if (!sourceFile.exists() || !sourceFile.isFile) throw FileNotFoundException("Source file does not exist: $sourceUri")
-    if (!isAllowedAppPath(sourceFile, ctx)) throw FileNotFoundException("Refused access to file outside allowed app directories: $sourceUri")
+    val canonicalFile = sourceFile.canonicalFile
+    if (!canonicalFile.exists() || !canonicalFile.isFile) throw FileNotFoundException("Source file does not exist: $sourceUri")
+    if (!ArtworkSecurityConfig.isAllowedPath(canonicalFile, ctx)) throw FileNotFoundException("Refused access to file outside allowed app directories: $sourceUri")
 
-    return ParcelFileDescriptor.open(sourceFile, ParcelFileDescriptor.MODE_READ_ONLY)
+    return ParcelFileDescriptor.open(canonicalFile, ParcelFileDescriptor.MODE_READ_ONLY)
   }
 
   override fun getType(uri: Uri): String = "image/*"
@@ -44,27 +46,4 @@ class ArtworkProvider : ContentProvider() {
   override fun insert(uri: Uri, values: ContentValues?): Uri? = null
   override fun delete(uri: Uri, selection: String?, selectionArgs: Array<String>?): Int = 0
   override fun update(uri: Uri, values: ContentValues?, selection: String?, selectionArgs: Array<String>?): Int = 0
-
-  /** Checks to see if the file we're opening belongs to us. */
-  private fun isAllowedAppPath(file: File, ctx: Context): Boolean {
-    return try {
-      val filePath = file.canonicalPath
-      val allowedRoots = listOfNotNull(
-        ctx.cacheDir?.canonicalPath,
-        ctx.filesDir?.canonicalPath,
-        ctx.externalCacheDir?.canonicalPath,
-        ctx.getExternalFilesDir(null)?.canonicalPath
-      )
-
-      for (rootPath in allowedRoots) {
-        if (filePath == rootPath || filePath.startsWith(rootPath + File.separator)) {
-          return true
-        }
-      }
-
-      false
-    } catch (_: Exception) {
-      false
-    }
-  }
 }

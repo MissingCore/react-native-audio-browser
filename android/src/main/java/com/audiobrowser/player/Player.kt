@@ -27,6 +27,7 @@ import com.margelo.nitro.audiobrowser.ImageContext
 import com.audiobrowser.model.PlayerSetupOptions
 import com.audiobrowser.model.PlayerUpdateOptions
 import com.audiobrowser.util.AndroidAudioContentTypeFactory
+import com.audiobrowser.util.ArtworkSecurityConfig
 import com.audiobrowser.util.CoilBitmapLoader
 import com.audiobrowser.util.EqualizerManager
 import com.audiobrowser.util.NetworkConnectivityMonitor
@@ -485,6 +486,10 @@ class Player(internal val context: Context) {
    */
   fun setup(setupOptions: PlayerSetupOptions) {
     Timber.Forest.d("Setting up player with new options")
+
+    // Apply artwork security config so ArtworkProvider knows which file parents
+    // are allowed to be served via the app-local content:// provider.
+    ArtworkSecurityConfig.setAllowedContentRoots(context, setupOptions.allowedArtworkParentPaths)
 
     val isInitialSetup = !::exoPlayer.isInitialized
 
