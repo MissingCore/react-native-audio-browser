@@ -7,6 +7,7 @@ import android.content.Context
 import android.database.Cursor
 import android.net.Uri
 import android.os.ParcelFileDescriptor
+import com.audiobrowser.util.ArtworkSecurityConfig
 import com.audiobrowser.util.ArtworkUriMapper
 import java.io.File
 import java.io.FileNotFoundException
@@ -49,6 +50,8 @@ class ArtworkProvider : ContentProvider() {
   private fun isAllowedAppPath(file: File, ctx: Context): Boolean {
     return try {
       val filePath = file.canonicalPath
+      // If explicit allowed roots were configured, honor them first
+      if (ArtworkSecurityConfig.isUnderAllowedRoots(file)) return true
       val allowedRoots = listOfNotNull(
         ctx.cacheDir?.canonicalPath,
         ctx.filesDir?.canonicalPath,

@@ -49,6 +49,9 @@ data class PlayerSetupOptions(
   var useDownSamplingProcessor: Boolean = false,
   // Whether to enable high-fidelity (float) output when building the audio sink
   var hiFiMode: Boolean = false,
+  // Optional list of allowed artwork roots. When set, `file://` artwork URIs will
+  // only be served to Android Auto if they are under one of these roots.
+  var allowedArtworkContentRoots: List<String>? = null,
 ) {
   /**
    * Whether automatic buffer management is enabled. True when rebufferBuffer is not explicitly set
@@ -71,6 +74,7 @@ data class PlayerSetupOptions(
       android.wakeMode?.let { wakeMode = it }
       android.downsamplingProcessor?.let { useDownSamplingProcessor = it }
       android.hiFiMode?.let { hiFiMode = it }
+      android.allowedArtworkContentRoots?.let { allowedArtworkContentRoots = it }
       android.audioOffload?.let {
         audioOffload =
           when (android.audioOffload) {
