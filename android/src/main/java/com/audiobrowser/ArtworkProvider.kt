@@ -33,10 +33,11 @@ class ArtworkProvider : ContentProvider() {
     }
 
     val sourceFile = File(sourceUri.path ?: throw FileNotFoundException("Invalid file URI"))
-    if (!sourceFile.exists() || !sourceFile.isFile) throw FileNotFoundException("Source file does not exist: $sourceUri")
-    if (!ArtworkSecurityConfig.isAllowedPath(sourceFile, ctx)) throw FileNotFoundException("Refused access to file outside allowed app directories: $sourceUri")
+    val canonicalFile = sourceFile.canonicalFile
+    if (!canonicalFile.exists() || !canonicalFile.isFile) throw FileNotFoundException("Source file does not exist: $sourceUri")
+    if (!ArtworkSecurityConfig.isAllowedPath(canonicalFile, ctx)) throw FileNotFoundException("Refused access to file outside allowed app directories: $sourceUri")
 
-    return ParcelFileDescriptor.open(sourceFile, ParcelFileDescriptor.MODE_READ_ONLY)
+    return ParcelFileDescriptor.open(canonicalFile, ParcelFileDescriptor.MODE_READ_ONLY)
   }
 
   override fun getType(uri: Uri): String = "image/*"
