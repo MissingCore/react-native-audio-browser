@@ -74,7 +74,7 @@ data class PlayerSetupOptions(
       android.wakeMode?.let { wakeMode = it }
       android.downsamplingProcessor?.let { useDownSamplingProcessor = it }
       android.hiFiMode?.let { hiFiMode = it }
-      android.allowedArtworkContentRoots?.let { allowedArtworkContentRoots = it }
+      android.allowedArtworkContentRoots?.let { allowedArtworkContentRoots = it.toList() }
       android.audioOffload?.let {
         audioOffload =
           when (android.audioOffload) {
