@@ -20,12 +20,18 @@ import java.io.File
  */
 object ArtworkSecurityConfig {
   @Volatile private var allowedCanonicalRoots: List<String> = emptyList()
+  @Volatile private var explicitRootPolicyEnabled: Boolean = false
 
   fun setAllowedContentRoots(ctx: Context, roots: List<String>?) {
     if (roots == null) {
       allowedCanonicalRoots = emptyList()
+      explicitRootPolicyEnabled = false
       return
     }
+
+    // Preserve current semantics for empty list (treated as no explicit policy),
+    // but enforce deny-by-default when a non-empty explicit list resolves to no roots.
+    explicitRootPolicyEnabled = roots.isNotEmpty()
 
     val canonicalPaths = mutableListOf<String>()
 
@@ -92,7 +98,7 @@ object ArtworkSecurityConfig {
       val filePath = file.canonicalPath
 
       // If explicit allowed roots were configured, enforce direct-parent-only policy
-      if (allowedCanonicalRoots.isNotEmpty()) {
+      if (explicitRootPolicyEnabled) {
         return isDirectlyUnderAllowedRoots(filePath)
       }
 
