@@ -308,12 +308,14 @@ export type PartialAndroidSetupPlayerOptions = {
    */
   hiFiMode?: boolean
   /**
-   * A list of allowed content:// or file:// roots. When provided, `file://` artwork
-   * URIs will only be exposed to Android Auto if their file path is under one of
-   * these roots. Each entry may be a `content://` or `file://` URI or a plain
-   * filesystem path. Content URIs that do not resolve to a file path are ignored.
+   * A list of allowed parent paths for artwork. When provided, `file://` artwork
+   * URIs will only be exposed to Android Auto if their file is directly under one
+   * of these parent paths.
+   *
+   * Each entry may be a `content://` or `file://` URI or a plain filesystem path.
+   * Content URIs that do not resolve to a file path are ignored.
    */
-  allowedArtworkContentRoots?: string[]
+   allowedArtworkParentPaths?: string[]
 }
 
 export interface AndroidSetupPlayerOptions {
@@ -434,10 +436,10 @@ export interface AndroidSetupPlayerOptions {
   hiFiMode?: boolean
   /**
    * When set, restricts which `file://` artwork URIs are exposed through the
-   * app-local `content://` artwork provider. Only files under one of the
-   * specified roots will be served to Android Auto.
+   * app-local `content://` artwork provider. Only files directly under one of the
+   * specified parent paths will be served to Android Auto.
    */
-  allowedArtworkContentRoots?: string[]
+   allowedArtworkParentPaths?: string[]
 }
 
 export interface PartialIOSSetupPlayerOptions {

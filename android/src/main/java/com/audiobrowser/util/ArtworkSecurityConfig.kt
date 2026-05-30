@@ -12,10 +12,10 @@ import java.io.File
  * This helper attempts to resolve them to canonical filesystem paths.
  *
  * Security model:
- * - If `allowedArtworkContentRoots` is configured: Files must be directly under one
- *   of the specified roots (not in subfolders). Paths are resolved to canonicalize
+ * - If `allowedArtworkParentPaths` is configured: Files must be directly under one
+ *   of the specified parent paths (not in subfolders). Paths are resolved to canonicalize
  *   escaping sequences (e.g., "..").
- * - If `allowedArtworkContentRoots` is empty/unspecified: Default app directories
+ * - If `allowedArtworkParentPaths` is empty/unspecified: Default app directories
  *   are allowed, including subfolders.
  */
 object ArtworkSecurityConfig {
@@ -76,11 +76,11 @@ object ArtworkSecurityConfig {
   }
 
   /**
-   * Checks if a file is allowed to be served. If `allowedArtworkContentRoots` is
-   * configured, the file must be directly under one of those roots (not in a subfolder).
+   * Checks if a file is allowed to be served. If `allowedArtworkParentPaths` is
+   * configured, the file must be directly under one of those paths (not in a subfolder).
    * Path escaping is resolved before checking (e.g., "..").
    *
-   * If `allowedArtworkContentRoots` is empty/unspecified, default app directories
+   * If `allowedArtworkParentPaths` is empty/unspecified, default app directories
    * are checked, including subfolders.
    *
    * @param file The file to check

@@ -487,9 +487,9 @@ class Player(internal val context: Context) {
   fun setup(setupOptions: PlayerSetupOptions) {
     Timber.Forest.d("Setting up player with new options")
 
-    // Apply artwork security config so ArtworkProvider knows which file roots
+    // Apply artwork security config so ArtworkProvider knows which file parents
     // are allowed to be served via the app-local content:// provider.
-    ArtworkSecurityConfig.setAllowedContentRoots(context, setupOptions.allowedArtworkContentRoots)
+    ArtworkSecurityConfig.setAllowedContentRoots(context, setupOptions.allowedArtworkParentPaths)
 
     val isInitialSetup = !::exoPlayer.isInitialized
 
