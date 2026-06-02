@@ -301,13 +301,6 @@ export type PartialAndroidSetupPlayerOptions = {
    */
   downsamplingProcessor?: boolean
   /**
-   * Whether to enable Hi-Fi audio, which will have the output become floats.
-   * This may not be supported on every device.
-   *
-   * @default false
-   */
-  hiFiMode?: boolean
-  /**
    * A list of allowed parent paths for artwork. When provided, `file://` artwork
    * URIs will only be exposed to Android Auto if their file is directly under one
    * of these parent paths.
@@ -429,11 +422,6 @@ export interface AndroidSetupPlayerOptions {
    * See `PartialAndroidSetupPlayerOptions.downsamplingProcessor` for details.
    */
   downsamplingProcessor: boolean
-  /**
-   * Whether to enable Hi-Fi audio, which will have the output become floats.
-   * See `PartialAndroidSetupPlayerOptions.hiFiMode` for details.
-   */
-  hiFiMode?: boolean
   /**
    * When set, restricts which `file://` artwork URIs are exposed through the
    * app-local `content://` artwork provider. Only files directly under one of the

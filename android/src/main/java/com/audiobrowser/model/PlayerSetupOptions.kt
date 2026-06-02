@@ -47,8 +47,6 @@ data class PlayerSetupOptions(
   var retryPolicy: RetryPolicy = RetryPolicy.Default,
   // Whether to enable the DownSamplingAudioProcessor when building the audio pipeline
   var useDownSamplingProcessor: Boolean = false,
-  // Whether to enable high-fidelity (float) output when building the audio sink
-  var hiFiMode: Boolean = false,
   // Optional list of allowed artwork parent paths. When set, `file://` artwork URIs will
   // only be served to Android Auto if they are directly under one of these.
   var allowedArtworkParentPaths: List<String>? = null,
@@ -73,7 +71,6 @@ data class PlayerSetupOptions(
       android.audioContentType?.let { audioContentType = it }
       android.wakeMode?.let { wakeMode = it }
       android.downsamplingProcessor?.let { useDownSamplingProcessor = it }
-      android.hiFiMode?.let { hiFiMode = it }
       android.allowedArtworkParentPaths?.let { allowedArtworkParentPaths = it.toList() }
       android.audioOffload?.let {
         audioOffload =

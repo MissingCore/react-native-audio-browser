@@ -526,7 +526,6 @@ class Player(internal val context: Context) {
         }
 
         return DefaultAudioSink.Builder(context)
-          .setEnableFloatOutput(setupOptions.hiFiMode)
           .setAudioProcessorChain(
             DefaultAudioSink.DefaultAudioProcessorChain(*processors.toTypedArray())
           )
