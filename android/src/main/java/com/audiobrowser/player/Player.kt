@@ -1018,6 +1018,14 @@ class Player(internal val context: Context) {
     mediaSessionCallback.commandManager.updateFavoriteState(mediaSession, favorited)
   }
 
+  var _replayGainEnabled = false
+  var replayGainEnabled: Boolean
+    get() = _replayGainEnabled
+    set(value) {
+      _replayGainEnabled = value
+      applyReplayGainForCurrentTrack()
+    }
+
   /**
    * Applies replay gain for the currently playing track. When the track has a defined replayGain
    * value, it's applied; otherwise the processor is set to pass-through mode (no adjustment).
@@ -1026,8 +1034,8 @@ class Player(internal val context: Context) {
    */
   internal fun applyReplayGainForCurrentTrack() {
     val track = currentTrack
-    if (track == null) {
-      // No track playing, clear replay gain
+    if (track == null || !_replayGainEnabled) {
+      // No track playing or replay gain is disabled, clear replay gain
       replayGainProcessor?.setReplayGain(null)
       return
     }

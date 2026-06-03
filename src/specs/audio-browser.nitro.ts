@@ -196,6 +196,8 @@ export interface AudioBrowser extends HybridObject<{
   setShuffleEnabled(enabled: boolean): void
   getPlaybackError(): PlaybackError | undefined
   retry(): void
+  setReplayGainStatus(status: boolean): void
+  getReplayGainStatus(): boolean
   getSleepTimer(): SleepTimer
   setSleepTimer(seconds: number): void
   setSleepTimerToEndOfTrack(): void
