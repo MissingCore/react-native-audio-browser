@@ -37,7 +37,7 @@ data class JsonResolvedTrack(
   val groupTitle: String? = null,
   val live: Boolean? = null,
   val carPlaySiriListButton: String? = null,
-  val replayGain: Float? = null,
+  val replayGain: Double? = null,
 )
 
 @Serializable
@@ -58,7 +58,7 @@ data class JsonTrack(
   val groupTitle: String? = null,
   val live: Boolean? = null,
   val imageRow: List<JsonImageRowItem>? = null,
-  val replayGain: Float? = null,
+  val replayGain: Double? = null,
 )
 
 /** Convert JSON models to Nitro types */
