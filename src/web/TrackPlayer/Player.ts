@@ -349,7 +349,7 @@ export class Player {
     }
   }
 
-  public setReplayGainStatus(status: boolean): void {
+  public setReplayGainStatus(_status: boolean): void {
   }
 
   public getReplayGainStatus(): boolean {
