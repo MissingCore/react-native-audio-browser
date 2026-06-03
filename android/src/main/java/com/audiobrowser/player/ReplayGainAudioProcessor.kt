@@ -85,23 +85,20 @@ class ReplayGainAudioProcessor : AudioProcessor {
     val limit = inputBuffer.limit()
     val bytesToProcess = limit - pos
 
-    // If no adjustment needed, just pass through the buffer unchanged
-    if (volumeFactor == 1f) {
-      Timber.v("No replay gain adjustment, passing buffer through unchanged")
-      outputBuffer = inputBuffer.slice().order(NATIVE_ORDER).also { it.position(pos) }
-      inputBuffer.position(limit)
-      return
-    }
-
     // Create output buffer and apply gain adjustment
     val output = ByteBuffer.allocateDirect(bytesToProcess).order(NATIVE_ORDER)
 
-    when (inputFormat.encoding) {
-      C.ENCODING_PCM_16BIT -> processInt16(inputBuffer, output)
-      C.ENCODING_PCM_FLOAT -> processFloat(inputBuffer, output)
-      else -> {
-        inputBuffer.position(limit)
-        return
+    if (volumeFactor == 1f) {
+      // If no adjustment needed, just pass through the buffer unchanged
+      output.put(inputBuffer.slice())
+    } else {
+      when (inputFormat.encoding) {
+        C.ENCODING_PCM_16BIT -> processInt16(inputBuffer, output)
+        C.ENCODING_PCM_FLOAT -> processFloat(inputBuffer, output)
+        else -> {
+          inputBuffer.position(limit)
+          return
+        }
       }
     }
 
