@@ -86,6 +86,9 @@ class PlayerListener(private val player: Player) : MediaPlayer.Listener {
     // Clear now playing override when track changes (new track = clean slate)
     player.clearNowPlayingOverride()
 
+    // Apply replay gain for the new track (or clear if undefined)
+    player.applyReplayGainForCurrentTrack()
+
     // Reset retry timer so new track gets fresh 2-minute window
     player.resetRetryTimer()
 

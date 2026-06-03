@@ -94,6 +94,9 @@ class Player(internal val context: Context) {
   private lateinit var loadControl: DynamicLoadControl
   private var automaticBufferManager: AutomaticBufferManager? = null
 
+  /** Applies replay gain adjustment to the audio buffer. Created lazily on first setup. */
+  private var replayGainProcessor: ReplayGainAudioProcessor? = null
+
   /**
    * Tracks whether a network-related retry is pending. When true, network restoration will trigger
    * an immediate retry via exoPlayer.prepare().
@@ -525,6 +528,12 @@ class Player(internal val context: Context) {
           processors.add(DownSamplingAudioProcessor())
         }
 
+        // Always include ReplayGainAudioProcessor for per-track gain adjustments
+        if (replayGainProcessor == null) {
+          replayGainProcessor = ReplayGainAudioProcessor()
+        }
+        processors.add(replayGainProcessor!!)
+
         return DefaultAudioSink.Builder(context)
           .setAudioProcessorChain(
             DefaultAudioSink.DefaultAudioProcessorChain(*processors.toTypedArray())
@@ -638,6 +647,9 @@ class Player(internal val context: Context) {
       }
 
       setPlaybackState(PlaybackState.NONE)
+
+      // Apply replay gain for the current track when re-setting up
+      applyReplayGainForCurrentTrack()
     }
 
     // Set up automatic buffer management if enabled
@@ -1003,6 +1015,30 @@ class Player(internal val context: Context) {
   internal fun updateFavoriteButtonState(favorited: Boolean?) {
     if (!::mediaSession.isInitialized) return
     mediaSessionCallback.commandManager.updateFavoriteState(mediaSession, favorited)
+  }
+
+  /**
+   * Applies replay gain for the currently playing track. When the track has a defined replayGain
+   * value, it's applied; otherwise the processor is set to pass-through mode (no adjustment).
+   *
+   * Called automatically when media item transitions occur.
+   */
+  internal fun applyReplayGainForCurrentTrack() {
+    val track = currentTrack
+    if (track == null) {
+      // No track playing, clear replay gain
+      replayGainProcessor?.setReplayGain(null)
+      return
+    }
+
+    val replayGainDb = track.replayGain
+    replayGainProcessor?.setReplayGain(replayGainDb)
+
+    if (replayGainDb != null) {
+      Timber.d("Applied replay gain ${replayGainDb}dB for track: ${track.title}")
+    } else {
+      Timber.d("No replay gain defined for track: ${track.title}, using pass-through mode")
+    }
   }
 
   /** Removes all the upcoming tracks, if any (the ones returned by [next]). */

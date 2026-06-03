@@ -180,6 +180,30 @@ export interface Track {
    * On app side: consumable by React Native UI for horizontal thumbnail layouts.
    */
   imageRow?: ImageRowItem[]
+
+  /**
+   * Replay gain adjustment in decibels (Android only).
+   *
+   * When present, applies a gain adjustment to the audio buffer during playback.
+   * Positive values amplify; negative values attenuate.
+   *
+   * When undefined or null, no adjustment is applied.
+   *
+   * @example
+   * ```ts
+   * // Boost track by 2dB
+   * track.replayGain = 2.0
+   *
+   * // Attenuate track by 1.5dB
+   * track.replayGain = -1.5
+   *
+   * // No adjustment
+   * track.replayGain = undefined
+   * ```
+   *
+   * @platform android
+   */
+  replayGain?: number
 }
 
 /**
