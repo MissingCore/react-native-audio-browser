@@ -190,6 +190,8 @@ class PlaybackStateStore(private val player: Player) {
           groupTitle = obj.optString("groupTitle").takeIf { it.isNotEmpty() },
           live = if (obj.has("live") && !obj.isNull("live")) obj.getBoolean("live") else null,
           imageRow = null, // Not persisted
+          replayGain =
+            if (obj.has("replayGain") && !obj.isNull("replayGain")) obj.getFloat("replayGain") else null,
         )
       }
       .onFailure { e -> Timber.w(e, "Failed to parse persisted track JSON") }

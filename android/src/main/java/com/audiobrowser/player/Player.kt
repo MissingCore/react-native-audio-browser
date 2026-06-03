@@ -886,6 +886,7 @@ class Player(internal val context: Context) {
         groupTitle = currentTrack.groupTitle,
         live = currentTrack.live,
         imageRow = currentTrack.imageRow,
+        replayGain = currentTrack.replayGain,
       )
 
     // Use buildUpon() on the existing MediaItem to update only the metadata
