@@ -1027,27 +1027,22 @@ class Player(internal val context: Context) {
     }
 
   /**
-   * Applies replay gain for the currently playing track. When the track has a defined replayGain
-   * value, it's applied; otherwise the processor is set to pass-through mode (no adjustment).
+   * Applies replay gain for the currently playing track if:
+   *  1. Replay gain is enabled (`_replayGainEnabled = true`).
+   *  2. The track has a defined `replayGain`.
    *
-   * Called automatically when media item transitions occur.
+   * Called automatically when media item transitions occur or when
+   * `_replayGainEnabled` changes.
    */
   internal fun applyReplayGainForCurrentTrack() {
     val track = currentTrack
     if (track == null || !_replayGainEnabled) {
-      // No track playing or replay gain is disabled, clear replay gain
+      // Clear replay gain if it's disabled or no track is playing.
       replayGainProcessor?.setReplayGain(null)
       return
     }
 
-    val replayGainDb = track.replayGain
-    replayGainProcessor?.setReplayGain(replayGainDb)
-
-    if (replayGainDb != null) {
-      Timber.d("Applied replay gain ${replayGainDb}dB for track: ${track.title}")
-    } else {
-      Timber.d("No replay gain defined for track: ${track.title}, using pass-through mode")
-    }
+    replayGainProcessor?.setReplayGain(track.replayGain)
   }
 
   /** Removes all the upcoming tracks, if any (the ones returned by [next]). */
