@@ -10,7 +10,6 @@ import kotlin.math.pow
 @UnstableApi
 class ReplayGainAudioProcessor : BaseAudioProcessor() {
   companion object {
-    private const val GAIN_DB_TO_LINEAR = 20f
     private val SUPPORTED_ENCODINGS = setOf(
       C.ENCODING_PCM_FLOAT,
       C.ENCODING_PCM_16BIT,
@@ -30,7 +29,7 @@ class ReplayGainAudioProcessor : BaseAudioProcessor() {
     val newVolume =
       if (replayGainDb != null) {
         // Convert dB to linear volume: V = 10^(dB/20)
-        10f.pow(replayGainDb.toFloat() / GAIN_DB_TO_LINEAR)
+        10f.pow(replayGainDb.toFloat() / 20f)
       } else {
         // No adjustment
         1f
