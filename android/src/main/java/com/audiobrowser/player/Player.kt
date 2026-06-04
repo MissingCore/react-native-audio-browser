@@ -1018,25 +1018,28 @@ class Player(internal val context: Context) {
     mediaSessionCallback.commandManager.updateFavoriteState(mediaSession, favorited)
   }
 
-  var _replayGainEnabled = false
+  private var replayGainEnabledInternal = false
   var replayGainEnabled: Boolean
-    get() = _replayGainEnabled
+    get() = replayGainEnabledInternal
     set(value) {
-      _replayGainEnabled = value
-      applyReplayGainForCurrentTrack()
+      replayGainEnabledInternal = value
+      if (::exoPlayer.isInitialized) {
+        applyReplayGainForCurrentTrack()
+      }
     }
 
   /**
    * Applies replay gain for the currently playing track if:
-   *  1. Replay gain is enabled (`_replayGainEnabled = true`).
+   *  1. Replay gain is enabled (`replayGainEnabledInternal = true`).
    *  2. The track has a defined `replayGain`.
    *
    * Called automatically when media item transitions occur or when
-   * `_replayGainEnabled` changes.
+   * `replayGainEnabledInternal` changes.
    */
   internal fun applyReplayGainForCurrentTrack() {
+    if (!::exoPlayer.isInitialized) return
     val track = currentTrack
-    if (track == null || !_replayGainEnabled) {
+    if (track == null || !replayGainEnabledInternal) {
       // Clear replay gain if it's disabled or no track is playing.
       replayGainProcessor?.setReplayGain(null)
       return

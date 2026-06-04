@@ -154,6 +154,7 @@ class PlaybackStateStore(private val player: Player) {
         put("favorited", track.favorited)
         put("groupTitle", track.groupTitle)
         put("live", track.live)
+        put("replayGain", track.replayGain)
       }
       .toString()
 

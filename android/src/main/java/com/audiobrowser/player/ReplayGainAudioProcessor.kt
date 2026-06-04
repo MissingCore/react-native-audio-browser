@@ -43,11 +43,15 @@ class ReplayGainAudioProcessor : BaseAudioProcessor() {
   }
 
   //#region AudioProcessor Implementation
-  override fun onConfigure(inputAudioFormat: AudioProcessor.AudioFormat): AudioProcessor.AudioFormat {
+  override fun configure(inputAudioFormat: AudioProcessor.AudioFormat): AudioProcessor.AudioFormat {
     if (inputAudioFormat.encoding !in SUPPORTED_ENCODINGS) {
-      throw AudioProcessor.UnhandledAudioFormatException(inputAudioFormat)
+      reset()
+      return inputAudioFormat
     }
-    return inputAudioFormat
+
+    pendingInputAudioFormat = inputAudioFormat
+    pendingOutputAudioFormat = onConfigure(inputAudioFormat)
+    return isActive() ? pendingOutputAudioFormat : AudioFormat.NOT_SET
   }
 
   override fun queueInput(inputBuffer: ByteBuffer) {
