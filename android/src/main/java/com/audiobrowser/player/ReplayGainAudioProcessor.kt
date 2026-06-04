@@ -2,32 +2,20 @@ package com.audiobrowser.player
 
 import androidx.media3.common.C
 import androidx.media3.common.audio.AudioProcessor
-import androidx.media3.common.audio.AudioProcessor.AudioFormat
+import androidx.media3.common.audio.BaseAudioProcessor
 import androidx.media3.common.util.UnstableApi
 import java.nio.ByteBuffer
-import java.nio.ByteOrder
 import kotlin.math.pow
-import timber.log.Timber
 
-/**
- * Applies replay gain adjustment at the audio buffer level.
- *
- * When replay gain is undefined or results in a volume factor of 1.0 (no adjustment),
- * the buffer is passed through unchanged for efficiency.
- *
- * Supports PCM 16-bit and PCM float audio formats.
- */
 @UnstableApi
-class ReplayGainAudioProcessor : AudioProcessor {
+class ReplayGainAudioProcessor : BaseAudioProcessor() {
   companion object {
     private const val GAIN_DB_TO_LINEAR = 20f
-    private val NATIVE_ORDER = ByteOrder.nativeOrder()
+    private val SUPPORTED_ENCODINGS = setOf(
+      C.ENCODING_PCM_FLOAT,
+      C.ENCODING_PCM_16BIT,
+    )
   }
-
-  private var inputFormat: AudioFormat = AudioFormat.NOT_SET
-  private var outputFormat: AudioFormat = AudioFormat.NOT_SET
-  private var outputBuffer: ByteBuffer = AudioProcessor.EMPTY_BUFFER
-  private var inputEnded = false
 
   /** Volume adjustment factor (1.0 = no adjustment). When null, pass through unchanged. */
   private var volumeFactor = 1f
@@ -49,44 +37,27 @@ class ReplayGainAudioProcessor : AudioProcessor {
       }
 
     if (newVolume != volumeFactor) {
-      Timber.d("ReplayGain adjustment changed: ${replayGainDb}dB (volume factor: $newVolume)")
       volumeFactor = newVolume
       // Flush existing buffer when gain changes to avoid applying old gain to new samples
       flush()
     }
   }
 
-  override fun configure(inputAudioFormat: AudioFormat): AudioFormat {
-    val isSupported =
-      inputAudioFormat.encoding in
-        setOf(C.ENCODING_PCM_FLOAT, C.ENCODING_PCM_16BIT) &&
-        inputAudioFormat.channelCount > 0
-
-    if (!isSupported) {
+  //#region AudioProcessor Implementation
+  override fun onConfigure(inputAudioFormat: AudioProcessor.AudioFormat): AudioProcessor.AudioFormat {
+    if (inputAudioFormat.encoding !in SUPPORTED_ENCODINGS) {
       throw AudioProcessor.UnhandledAudioFormatException(inputAudioFormat)
     }
-
-    inputFormat = inputAudioFormat
-    outputFormat = inputAudioFormat
-    return outputFormat
-  }
-
-  override fun isActive(): Boolean {
-    return outputFormat != AudioFormat.NOT_SET
+    return inputAudioFormat
   }
 
   override fun queueInput(inputBuffer: ByteBuffer) {
-    if (!inputBuffer.hasRemaining() || !isActive()) {
-      inputBuffer.position(inputBuffer.limit())
-      return
-    }
-
     val pos = inputBuffer.position()
     val limit = inputBuffer.limit()
     val bytesToProcess = limit - pos
 
-    // Create output buffer and apply gain adjustment
-    val output = ByteBuffer.allocateDirect(bytesToProcess).order(NATIVE_ORDER)
+    // Get the output buffer from BaseAudioProcessor
+    val output = replaceOutputBuffer(bytesToProcess)
 
     if (volumeFactor == 1f) {
       // If no adjustment needed, just pass through the buffer unchanged
@@ -103,37 +74,11 @@ class ReplayGainAudioProcessor : AudioProcessor {
     }
 
     output.flip()
-    outputBuffer = output
     inputBuffer.position(limit)
   }
+  //#endregion
 
-  override fun queueEndOfStream() {
-    inputEnded = true
-  }
-
-  override fun getOutput(): ByteBuffer {
-    val output = outputBuffer
-    outputBuffer = AudioProcessor.EMPTY_BUFFER
-    return output
-  }
-
-  override fun isEnded(): Boolean {
-    return inputEnded && outputBuffer == AudioProcessor.EMPTY_BUFFER
-  }
-
-  override fun flush() {
-    outputBuffer = AudioProcessor.EMPTY_BUFFER
-    inputEnded = false
-  }
-
-  override fun reset() {
-    flush()
-    inputFormat = AudioFormat.NOT_SET
-    outputFormat = AudioFormat.NOT_SET
-  }
-
-  // MARK: - Audio Processing
-
+  //#region Buffer Helpers
   /**
    * Processes 16-bit PCM audio with replay gain adjustment.
    *
@@ -167,4 +112,5 @@ class ReplayGainAudioProcessor : AudioProcessor {
       output.putFloat(amplified)
     }
   }
+  //#endregion
 }
