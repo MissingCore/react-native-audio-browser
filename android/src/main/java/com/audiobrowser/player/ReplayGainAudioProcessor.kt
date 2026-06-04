@@ -62,7 +62,7 @@ class ReplayGainAudioProcessor : BaseAudioProcessor() {
       // If no adjustment needed, just pass through the buffer unchanged
       output.put(inputBuffer.slice())
     } else {
-      when (inputFormat.encoding) {
+      when (inputAudioFormat.encoding) {
         C.ENCODING_PCM_16BIT -> processInt16(inputBuffer, output)
         C.ENCODING_PCM_FLOAT -> processFloat(inputBuffer, output)
         else -> {
