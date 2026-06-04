@@ -30,7 +30,7 @@ class ReplayGainAudioProcessor : BaseAudioProcessor() {
     val newVolume =
       if (replayGainDb != null) {
         // Convert dB to linear volume: V = 10^(dB/20)
-        GAIN_DB_TO_LINEAR.pow(replayGainDb.toFloat() / GAIN_DB_TO_LINEAR)
+        10f.pow(replayGainDb.toFloat() / GAIN_DB_TO_LINEAR)
       } else {
         // No adjustment
         1f
