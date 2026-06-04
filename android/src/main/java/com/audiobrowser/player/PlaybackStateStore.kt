@@ -154,6 +154,7 @@ class PlaybackStateStore(private val player: Player) {
         put("favorited", track.favorited)
         put("groupTitle", track.groupTitle)
         put("live", track.live)
+        put("replayGain", track.replayGain)
       }
       .toString()
 
@@ -190,6 +191,8 @@ class PlaybackStateStore(private val player: Player) {
           groupTitle = obj.optString("groupTitle").takeIf { it.isNotEmpty() },
           live = if (obj.has("live") && !obj.isNull("live")) obj.getBoolean("live") else null,
           imageRow = null, // Not persisted
+          replayGain =
+            if (obj.has("replayGain") && !obj.isNull("replayGain")) obj.getDouble("replayGain") else null,
         )
       }
       .onFailure { e -> Timber.w(e, "Failed to parse persisted track JSON") }

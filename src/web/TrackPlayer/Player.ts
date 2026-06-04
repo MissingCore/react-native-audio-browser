@@ -348,4 +348,11 @@ export class Player {
       buffered
     }
   }
+
+  public setReplayGainStatus(_status: boolean): void {
+  }
+
+  public getReplayGainStatus(): boolean {
+    return false
+  }
 }

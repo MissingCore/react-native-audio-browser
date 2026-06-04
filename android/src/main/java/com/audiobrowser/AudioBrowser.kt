@@ -740,6 +740,10 @@ class AudioBrowser : HybridAudioBrowserSpec(), ServiceConnection {
 
   override fun retry() = runBlockingOnMain { player.prepare() }
 
+  override fun setReplayGainStatus(status: Boolean) = runBlockingOnMain { player.replayGainEnabled = status }
+
+  override fun getReplayGainStatus(): Boolean = runBlockingOnMain { player.replayGainEnabled }
+
   // ============================================================================
   // MARK: Queue Management
   // ============================================================================

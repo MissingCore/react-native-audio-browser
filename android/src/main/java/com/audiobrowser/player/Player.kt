@@ -94,6 +94,9 @@ class Player(internal val context: Context) {
   private lateinit var loadControl: DynamicLoadControl
   private var automaticBufferManager: AutomaticBufferManager? = null
 
+  /** Applies replay gain adjustment to the audio buffer. Created lazily on first setup. */
+  private var replayGainProcessor: ReplayGainAudioProcessor? = null
+
   /**
    * Tracks whether a network-related retry is pending. When true, network restoration will trigger
    * an immediate retry via exoPlayer.prepare().
@@ -525,6 +528,12 @@ class Player(internal val context: Context) {
           processors.add(DownSamplingAudioProcessor())
         }
 
+        // Always include ReplayGainAudioProcessor for per-track gain adjustments
+        if (replayGainProcessor == null) {
+          replayGainProcessor = ReplayGainAudioProcessor()
+        }
+        processors.add(replayGainProcessor!!)
+
         return DefaultAudioSink.Builder(context)
           .setAudioProcessorChain(
             DefaultAudioSink.DefaultAudioProcessorChain(*processors.toTypedArray())
@@ -638,6 +647,9 @@ class Player(internal val context: Context) {
       }
 
       setPlaybackState(PlaybackState.NONE)
+
+      // Apply replay gain for the current track when re-setting up
+      applyReplayGainForCurrentTrack()
     }
 
     // Set up automatic buffer management if enabled
@@ -874,6 +886,7 @@ class Player(internal val context: Context) {
         groupTitle = currentTrack.groupTitle,
         live = currentTrack.live,
         imageRow = currentTrack.imageRow,
+        replayGain = currentTrack.replayGain,
       )
 
     // Use buildUpon() on the existing MediaItem to update only the metadata
@@ -1003,6 +1016,36 @@ class Player(internal val context: Context) {
   internal fun updateFavoriteButtonState(favorited: Boolean?) {
     if (!::mediaSession.isInitialized) return
     mediaSessionCallback.commandManager.updateFavoriteState(mediaSession, favorited)
+  }
+
+  private var replayGainEnabledInternal = false
+  var replayGainEnabled: Boolean
+    get() = replayGainEnabledInternal
+    set(value) {
+      replayGainEnabledInternal = value
+      if (::exoPlayer.isInitialized) {
+        applyReplayGainForCurrentTrack()
+      }
+    }
+
+  /**
+   * Applies replay gain for the currently playing track if:
+   *  1. Replay gain is enabled (`replayGainEnabledInternal = true`).
+   *  2. The track has a defined `replayGain`.
+   *
+   * Called automatically when media item transitions occur or when
+   * `replayGainEnabledInternal` changes.
+   */
+  internal fun applyReplayGainForCurrentTrack() {
+    if (!::exoPlayer.isInitialized) return
+    val track = currentTrack
+    if (track == null || !replayGainEnabledInternal) {
+      // Clear replay gain if it's disabled or no track is playing.
+      replayGainProcessor?.setReplayGain(null)
+      return
+    }
+
+    replayGainProcessor?.setReplayGain(track.replayGain)
   }
 
   /** Removes all the upcoming tracks, if any (the ones returned by [next]). */

@@ -164,6 +164,7 @@ class BrowserManager {
       groupTitle = track.groupTitle,
       live = track.live,
       imageRow = track.imageRow,
+      replayGain = track.replayGain,
     )
   }
 
@@ -761,6 +762,7 @@ class BrowserManager {
           groupTitle = null,
           live = null,
           imageRow = null,
+          replayGain = null,
         )
 
       // Cache search results for getCachedSearchResults()
@@ -800,6 +802,7 @@ class BrowserManager {
           groupTitle = null,
           live = null,
           imageRow = null,
+          replayGain = null,
         )
 
       return emptySearchResult
