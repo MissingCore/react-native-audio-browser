@@ -549,6 +549,7 @@ class Player(internal val context: Context) {
           .setAudioProcessorChain(
             DefaultAudioSink.DefaultAudioProcessorChain(*processors.toTypedArray())
           )
+          .setEnableAudioOutputPlaybackParameters(enableAudioOutputPlaybackParams)
           .build()
       }
     }
