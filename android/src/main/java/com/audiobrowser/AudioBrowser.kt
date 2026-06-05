@@ -713,6 +713,10 @@ class AudioBrowser : HybridAudioBrowserSpec(), ServiceConnection {
   override fun setRate(rate: Double) = runBlockingOnMain { player.playbackSpeed = rate.toFloat() }
 
   override fun getRate(): Double = runBlockingOnMain { player.playbackSpeed.toDouble() }
+  
+  override fun setPitch(pitch: Double) = runBlockingOnMain { player.playbackPitch = pitch.toFloat() }
+
+  override fun getPitch(): Double = runBlockingOnMain { player.playbackPitch.toDouble() }
 
   override fun getProgress(): Progress = runBlockingOnMain {
     Progress(

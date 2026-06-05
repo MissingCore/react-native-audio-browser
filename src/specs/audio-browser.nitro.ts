@@ -187,6 +187,8 @@ export interface AudioBrowser extends HybridObject<{
   getVolume(): number
   setRate(rate: number): void
   getRate(): number
+  setPitch(pitch: number): void
+  getPitch(): number
   getProgress(): Progress
   getPlayback(): Playback
   getPlayingState(): PlayingState
