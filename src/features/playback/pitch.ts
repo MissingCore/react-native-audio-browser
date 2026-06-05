@@ -15,6 +15,6 @@ export function getPitch(): number {
  * Sets the playback pitch.
  * @param pitch - The playback pitch to change to.
  */
-export function setPitch(rate: number): void {
-  nativeBrowser.setPitch(rate)
+export function setPitch(pitch: number): void {
+  nativeBrowser.setPitch(pitch)
 }
