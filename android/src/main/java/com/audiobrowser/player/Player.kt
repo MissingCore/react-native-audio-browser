@@ -549,7 +549,7 @@ class Player(internal val context: Context) {
           .setAudioProcessorChain(
             DefaultAudioSink.DefaultAudioProcessorChain(*processors.toTypedArray())
           )
-          .setEnableAudioOutputPlaybackParameters(enableAudioOutputPlaybackParams)
+          .setEnableAudioOutputPlaybackParameters(true) // Forcing this to `true` doesn't break playback when switching pitch rapidly.
           .build()
       }
     }
