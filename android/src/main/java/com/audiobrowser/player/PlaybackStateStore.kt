@@ -19,7 +19,7 @@ import timber.log.Timber
  * and player settings to enable playback resumption via MediaButtonReceiver (Bluetooth play button,
  * etc.).
  *
- * Settings (repeatMode, shuffleEnabled, playbackSpeed) are auto-persisted when set via properties.
+ * Settings (repeatMode, shuffleEnabled, playbackSpeed, playbackPitch) are auto-persisted when set via properties.
  * Position/URL are persisted via save() on pause or track change.
  */
 class PlaybackStateStore(private val player: Player) {
@@ -34,6 +34,7 @@ class PlaybackStateStore(private val player: Player) {
    * @param repeatMode The repeat mode setting
    * @param shuffleEnabled Whether shuffle mode was enabled
    * @param playbackSpeed The playback speed (1.0 = normal)
+   * @param playbackPitch The playback pitch (1.0 = normal)
    */
   data class PersistedState(
     val track: Track,
@@ -41,6 +42,7 @@ class PlaybackStateStore(private val player: Player) {
     val repeatMode: RepeatMode,
     val shuffleEnabled: Boolean,
     val playbackSpeed: Float,
+    val playbackPitch: Float,
   )
 
   /** Repeat mode setting - auto-persisted when set. */
@@ -65,6 +67,13 @@ class PlaybackStateStore(private val player: Player) {
     get() = prefs.getFloat(KEY_PLAYBACK_SPEED, 1.0f)
     set(value) {
       prefs.edit { putFloat(KEY_PLAYBACK_SPEED, value) }
+    }
+
+  /** Playback pitch setting - auto-persisted when set. */
+  var playbackPitch: Float
+    get() = prefs.getFloat(KEY_PLAYBACK_PITCH, 1.0f)
+    set(value) {
+      prefs.edit { putFloat(KEY_PLAYBACK_PITCH, value) }
     }
 
   private val scope = MainScope()
@@ -201,7 +210,7 @@ class PlaybackStateStore(private val player: Player) {
   /**
    * Restores player settings from persisted state and returns the state for queue setup.
    *
-   * Applies repeatMode, shuffleMode, and playbackSpeed to the player. The caller is responsible for
+   * Applies repeatMode, shuffleMode, playbackSpeed, and playbackPitch to the player. The caller is responsible for
    * using the returned url and positionMs to set up the playback queue.
    *
    * @return PersistedState if available, null otherwise
@@ -212,9 +221,10 @@ class PlaybackStateStore(private val player: Player) {
       player.repeatMode = state.repeatMode
       player.shuffleMode = state.shuffleEnabled
       player.playbackSpeed = state.playbackSpeed
+      player.playbackPitch = state.playbackPitch
 
       Timber.d(
-        "Restored player settings: repeatMode=${state.repeatMode}, shuffle=${state.shuffleEnabled}, speed=${state.playbackSpeed}"
+        "Restored player settings: repeatMode=${state.repeatMode}, shuffle=${state.shuffleEnabled}, speed=${state.playbackSpeed}, pitch=${state.playbackPitch}"
       )
     }
 
@@ -228,7 +238,7 @@ class PlaybackStateStore(private val player: Player) {
     val track = trackFromJson(trackJson) ?: return null
     val positionMs = prefs.getLong(KEY_POSITION_MS, 0)
 
-    return PersistedState(track, positionMs, repeatMode, shuffleEnabled, playbackSpeed)
+    return PersistedState(track, positionMs, repeatMode, shuffleEnabled, playbackSpeed, playbackPitch)
   }
 
   /** Clears the persisted playback state. */
@@ -243,6 +253,7 @@ class PlaybackStateStore(private val player: Player) {
     private const val KEY_REPEAT_MODE = "repeat_mode"
     private const val KEY_SHUFFLE_ENABLED = "shuffle_enabled"
     private const val KEY_PLAYBACK_SPEED = "playback_speed"
+    private const val KEY_PLAYBACK_PITCH = "playback_pitch"
     private const val KEY_TRACK = "track"
     private const val PERIODIC_SAVE_INTERVAL_MS = 5000L
   }

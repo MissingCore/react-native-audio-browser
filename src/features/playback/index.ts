@@ -1,5 +1,6 @@
 export * from './controls'
 export * from './state'
+export * from './pitch'
 export * from './playing'
 export * from './playWhenReady'
 export * from './progress'

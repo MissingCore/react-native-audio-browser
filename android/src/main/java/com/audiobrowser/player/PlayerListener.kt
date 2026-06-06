@@ -213,6 +213,7 @@ class PlayerListener(private val player: Player) : MediaPlayer.Listener {
 
   override fun onPlaybackParametersChanged(playbackParameters: PlaybackParameters) {
     player.playbackStateStore.playbackSpeed = playbackParameters.speed
+    player.playbackStateStore.playbackPitch = playbackParameters.pitch
   }
 
   /**

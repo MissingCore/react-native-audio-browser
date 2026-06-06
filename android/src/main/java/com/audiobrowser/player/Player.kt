@@ -7,6 +7,7 @@ import androidx.media3.common.C
 import androidx.media3.common.ForwardingPlayer
 import androidx.media3.common.HeartRating
 import androidx.media3.common.MediaItem
+import androidx.media3.common.PlaybackParameters
 import androidx.media3.common.Player as MediaPlayer
 import androidx.media3.common.TrackSelectionParameters
 import androidx.media3.common.audio.AudioProcessor
@@ -415,7 +416,28 @@ class Player(internal val context: Context) {
   var playbackSpeed: Float
     get() = exoPlayer.playbackParameters.speed
     set(value) {
-      exoPlayer.setPlaybackSpeed(value)
+      // Preserve current pitch when changing speed
+      val currentPitch = exoPlayer.playbackParameters.pitch
+      exoPlayer.setPlaybackParameters(PlaybackParameters(value, currentPitch))
+    }
+
+  var playbackPitch: Float
+    get() = exoPlayer.playbackParameters.pitch
+    set(value) {
+      // Preserve current speed when changing pitch
+      val currentSpeed = exoPlayer.playbackParameters.speed
+      val wasPlayWhenReady = exoPlayer.playWhenReady
+
+      // Pausing playback before updating parameters solves the issue that
+      // `setEnableAudioOutputPlaybackParameters(true)` also fixed, but without
+      // delaying the AudioProcesors.
+      try {
+        exoPlayer.playWhenReady = false
+        exoPlayer.setPlaybackParameters(PlaybackParameters(currentSpeed, value))
+        exoPlayer.seekTo(exoPlayer.currentPosition)
+      } finally {
+        playWhenReady = wasPlayWhenReady
+      }
     }
 
   val isPlaying
@@ -538,6 +560,7 @@ class Player(internal val context: Context) {
           .setAudioProcessorChain(
             DefaultAudioSink.DefaultAudioProcessorChain(*processors.toTypedArray())
           )
+          .setEnableAudioOutputPlaybackParameters(enableAudioOutputPlaybackParams)
           .build()
       }
     }

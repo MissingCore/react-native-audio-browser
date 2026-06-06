@@ -308,6 +308,13 @@ export class Player {
     return element.playbackRate
   }
 
+  public setPitch(_pitch: number): void {
+  }
+
+  public getPitch(): number {
+    return 1
+  }
+
   public seekBy(offset: number): void {
     if (this._loadInProgress) {
       this._pendingSeek = (this._pendingSeek ?? 0) + offset
