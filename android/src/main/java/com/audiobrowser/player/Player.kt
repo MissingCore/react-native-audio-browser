@@ -426,13 +426,18 @@ class Player(internal val context: Context) {
     set(value) {
       // Preserve current speed when changing pitch
       val currentSpeed = exoPlayer.playbackParameters.speed
+      val wasPlayWhenReady = exoPlayer.playWhenReady
+
       // Pausing playback before updating parameters solves the issue that
       // `setEnableAudioOutputPlaybackParameters(true)` also fixed, but without
       // delaying the AudioProcesors.
-      exoPlayer.playWhenReady = false
-      exoPlayer.setPlaybackParameters(PlaybackParameters(currentSpeed, value))
-      exoPlayer.seekTo(exoPlayer.currentPosition)
-      exoPlayer.playWhenReady = true
+      try {
+        exoPlayer.playWhenReady = false
+        exoPlayer.setPlaybackParameters(PlaybackParameters(currentSpeed, value))
+        exoPlayer.seekTo(exoPlayer.currentPosition)
+      } finally {
+        playWhenReady = wasPlayWhenReady
+      }
     }
 
   val isPlaying
