@@ -426,7 +426,13 @@ class Player(internal val context: Context) {
     set(value) {
       // Preserve current speed when changing pitch
       val currentSpeed = exoPlayer.playbackParameters.speed
+      // Pausing playback before updating parameters solves the issue that
+      // `setEnableAudioOutputPlaybackParameters(true)` also fixed, but without
+      // delaying the AudioProcesors.
+      exoPlayer.playWhenReady = false
       exoPlayer.setPlaybackParameters(PlaybackParameters(currentSpeed, value))
+      exoPlayer.seekTo(exoPlayer.currentPosition)
+      exoPlayer.playWhenReady = true
     }
 
   val isPlaying
@@ -549,7 +555,7 @@ class Player(internal val context: Context) {
           .setAudioProcessorChain(
             DefaultAudioSink.DefaultAudioProcessorChain(*processors.toTypedArray())
           )
-          .setEnableAudioOutputPlaybackParameters(true) // Forcing this to `true` doesn't break playback when switching pitch rapidly.
+          .setEnableAudioOutputPlaybackParameters(enableAudioOutputPlaybackParams)
           .build()
       }
     }
