@@ -71,23 +71,23 @@ class MediaSessionCallback(private val player: Player) :
     }
   }
 
-  /** Creates an offline error MediaItem. */
-  private fun createOfflineMediaItem(): MediaItem {
-    val errorTitle = player.context.getString(com.audiobrowser.R.string.audio_browser_offline_error)
-    val errorSubtitle =
-      player.context.getString(com.audiobrowser.R.string.audio_browser_offline_error_subtitle)
-    return MediaItem.Builder()
-      .setMediaId(BrowserPathHelper.OFFLINE_PATH)
-      .setMediaMetadata(
-        MediaMetadata.Builder()
-          .setTitle(errorTitle)
-          .setSubtitle(errorSubtitle)
-          .setIsBrowsable(false)
-          .setIsPlayable(false)
-          .build()
-      )
-      .build()
-  }
+//  /** Creates an offline error MediaItem. */
+//  private fun createOfflineMediaItem(): MediaItem {
+//    val errorTitle = player.context.getString(com.audiobrowser.R.string.audio_browser_offline_error)
+//    val errorSubtitle =
+//      player.context.getString(com.audiobrowser.R.string.audio_browser_offline_error_subtitle)
+//    return MediaItem.Builder()
+//      .setMediaId(BrowserPathHelper.OFFLINE_PATH)
+//      .setMediaMetadata(
+//        MediaMetadata.Builder()
+//          .setTitle(errorTitle)
+//          .setSubtitle(errorSubtitle)
+//          .setIsBrowsable(false)
+//          .setIsPlayable(false)
+//          .build()
+//      )
+//      .build()
+//  }
 
   fun updateMediaSession(
     mediaSession: MediaSession,
@@ -226,13 +226,13 @@ class MediaSessionCallback(private val player: Player) :
           .also { Timber.d("Browser ready, proceeding with onGetChildren") }
           .browserManager
 
-      // Show offline error when offline:
-      if (
-        !player.networkMonitor.isOnline.value && browserManager.config.androidControllerOfflineError
-      ) {
-        Timber.w("Network offline - returning error message for: $parentId")
-        return@future LibraryResult.ofItemList(ImmutableList.of(createOfflineMediaItem()), params)
-      }
+//      // Show offline error when offline:
+//      if (
+//        !player.networkMonitor.isOnline.value && browserManager.config.androidControllerOfflineError
+//      ) {
+//        Timber.w("Network offline - returning error message for: $parentId")
+//        return@future LibraryResult.ofItemList(ImmutableList.of(createOfflineMediaItem()), params)
+//      }
 
       try {
         // Get context and imageLoader for SVG pre-rendering
@@ -283,10 +283,10 @@ class MediaSessionCallback(private val player: Player) :
   ): ListenableFuture<LibraryResult<MediaItem>> {
     Timber.Forest.d("onGetItem: ${browser.packageName}, mediaId = $mediaId")
     return scope.future {
-      // Handle special paths first (these don't need browser)
-      if (mediaId == BrowserPathHelper.OFFLINE_PATH) {
-        return@future LibraryResult.ofItem(createOfflineMediaItem(), null)
-      }
+//      // Handle special paths first (these don't need browser)
+//      if (mediaId == BrowserPathHelper.OFFLINE_PATH) {
+//        return@future LibraryResult.ofItem(createOfflineMediaItem(), null)
+//      }
 
       if (mediaId == BrowserPathHelper.ROOT_PATH || mediaId == BrowserPathHelper.RECENT_PATH) {
         return@future LibraryResult.ofItem(
